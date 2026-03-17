@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atom 3D Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060613;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{padding:12px 20px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:1.3rem;font-weight:600;white-space:nowrap}
+.controls{display:flex;gap:8px;flex:1}
+input{flex:1;max-width:380px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.95rem;outline:none;transition:border-color .2s}
+input:focus{border-color:#5588ff}
+input::placeholder{color:rgba(255,255,255,.35)}
+.btn{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:500;transition:opacity .15s,transform .1s}
+.btn:hover{opacity:.85}
+.btn:active{transform:scale(.97)}
+.btn-gen{background:#4466ff;color:#fff}
+.btn-dl{background:#22aa66;color:#fff;display:none}
+#wrap{flex:1;position:relative}
+canvas{display:block}
+#info{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.12);font-size:.82rem;line-height:1.9;min-width:180px;display:none}
+#info h2{font-size:1.15rem;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;margin-bottom:8px}
+#hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);padding:7px 18px;border-radius:20px;font-size:.78rem;color:rgba(255,255,255,.5);pointer-events:none;white-space:nowrap}
+#err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,50,50,.12);border:1px solid rgba(255,80,80,.4);padding:16px 28px;border-radius:10px;color:#ffaaaa;display:none;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚛ Atom 3D Generator</h1>
+  <div class="controls">
+    <input id="inp" type="text" placeholder="Element name, symbol, or atomic number…" />
+    <button class="btn btn-gen" id="btn-gen">Generate</button>
+    <button class="btn btn-dl" id="btn-dl">⬇ Download STL</button>
+  </div>
+</header>
+<div id="wrap">
+  <div id="info">
+    <h2 id="i-name"></h2>
+    <span id="i-badge" class="badge"></span>
+    <div id="i-det"></div>
+  </div>
+  <div id="err">Element not found. Try "Carbon", "Fe", or "26".</div>
+  <div id="hint">Enter an element above to begin</div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ── Element Data: [symbol, name, Z, mass, shells[], category] ────────────────
+const RAW = [
+['H','Hydrogen',1,1.008,[1],'nonmetal'],
+['He','Helium',2,4.003,[2],'noble'],
+['Li','Lithium',3,6.941,[2,1],'alkali'],
+['Be','Beryllium',4,9.012,[2,2],'alkaline'],
+['B','Boron',5,10.811,[2,3],'metalloid'],
+['C','Carbon',6,12.011,[2,4],'nonmetal'],
+['N','Nitrogen',7,14.007,[2,5],'nonmetal'],
+['O','Oxygen',8,15.999,[2,6],'nonmetal'],
+['F','Fluorine',9,18.998,[2,7],'halogen'],
+['Ne','Neon',10,20.180,[2,8],'noble'],
+['Na','Sodium',11,22.990,[2,8,1],'alkali'],
+['Mg','Magnesium',12,24.305,[2,8,2],'alkaline'],
+['Al','Aluminum',13,26.982,[2,8,3],'post-transition'],
+['Si','Silicon',14,28.086,[2,8,4],'metalloid'],
+['P','Phosphorus',15,30.974,[2,8,5],'nonmetal'],
+['S','Sulfur',16,32.065,[2,8,6],'nonmetal'],
+['Cl','Chlorine',17,35.453,[2,8,7],'halogen'],
+['Ar','Argon',18,39.948,[2,8,8],'noble'],
+['K','Potassium',19,39.098,[2,8,8,1],'alkali'],
+['Ca','Calcium',20,40.078,[2,8,8,2],'alkaline'],
+['Sc','Scandium',21,44.956,[2,8,9,2],'transition'],
+['Ti','Titanium',22,47.867,[2,8,10,2],'transition'],
+['V','Vanadium',23,50.942,[2,8,11,2],'transition'],
+['Cr','Chromium',24,51.996,[2,8,13,1],'transition'],
+['Mn','Manganese',25,54.938,[2,8,13,2],'transition'],
+['Fe','Iron',26,55.845,[2,8,14,2],'transition'],
+['Co','Cobalt',27,58.933,[2,8,15,2],'transition'],
+['Ni','Nickel',28,58.693,[2,8,16,2],'transition'],
+['Cu','Copper',29,63.546,[2,8,18,1],'transition'],
+['Zn','Zinc',30,65.38,[2,8,18,2],'transition'],
+['Ga','Gallium',31,69.723,[2,8,18,3],'post-transition'],
+['Ge','Germanium',32,72.630,[2,8,18,4],'metalloid'],
+['As','Arsenic',33,74.922,[2,8,18,5],'metalloid'],
+['Se','Selenium',34,78.971,[2,8,18,6],'nonmetal'],
+['Br','Bromine',35,79.904,[2,8,18,7],'halogen'],
+['Kr','Krypton',36,83.798,[2,8,18,8],'noble'],
+['Rb','Rubidium',37,85.468,[2,8,18,8,1],'alkali'],
+['Sr','Strontium',38,87.62,[2,8,18,8,2],'alkaline'],
+['Y','Yttrium',39,88.906,[2,8,18,9,2],'transition'],
+['Zr','Zirconium',40,91.224,[2,8,18,10,2],'transition'],
+['Nb','Niobium',41,92.906,[2,8,18,12,1],'transition'],
+['Mo','Molybdenum',42,95.95,[2,8,18,13,1],'transition'],
+['Tc','Technetium',43,97,[2,8,18,13,2],'transition'],
+['Ru','Ruthenium',44,101.07,[2,8,18,15,1],'transition'],
+['Rh','Rhodium',45,102.906,[2,8,18,16,1],'transition'],
+['Pd','Palladium',46,106.42,[2,8,18,18],'transition'],
+['Ag','Silver',47,107.868,[2,8,18,18,1],'transition'],
+['Cd','Cadmium',48,112.414,[2,8,18,18,2],'transition'],
+['In','Indium',49,114.818,[2,8,18,18,3],'post-transition'],
+['Sn','Tin',50,118.710,[2,8,18,18,4],'post-transition'],
+['Sb','Antimony',51,121.760,[2,8,18,18,5],'metalloid'],
+['Te','Tellurium',52,127.60,[2,8,18,18,6],'metalloid'],
+['I','Iodine',53,126.904,[2,8,18,18,7],'halogen'],
+['Xe','Xenon',54,131.293,[2,8,18,18,8],'noble'],
+['Cs','Cesium',55,132.905,[2,8,18,18,8,1],'alkali'],
+['Ba','Barium',56,137.327,[2,8,18,18,8,2],'alkaline'],
+['La','Lanthanum',57,138.905,[2,8,18,18,9,2],'lanthanide'],
+['Ce','Cerium',58,140.116,[2,8,18,19,9,2],'lanthanide'],
+['Pr','Praseodymium',59,140.908,[2,8,18,21,8,2],'lanthanide'],
+['Nd','Neodymium',60,144.242,[2,8,18,22,8,2],'lanthanide'],
+['Pm','Promethium',61,145,[2,8,18,23,8,2],'lanthanide'],
+['Sm','Samarium',62,150.36,[2,8,18,24,8,2],'lanthanide'],
+['Eu','Europium',63,151.964,[2,8,18,25,8,2],'lanthanide'],
+['Gd','Gadolinium',64,157.25,[2,8,18,25,9,2],'lanthanide'],
+['Tb','Terbium',65,158.925,[2,8,18,27,8,2],'lanthanide'],
+['Dy','Dysprosium',66,162.500,[2,8,18,28,8,2],'lanthanide'],
+['Ho','Holmium',67,164.930,[2,8,18,29,8,2],'lanthanide'],
+['Er','Erbium',68,167.259,[2,8,18,30,8,2],'lanthanide'],
+['Tm','Thulium',69,168.934,[2,8,18,31,8,2],'lanthanide'],
+['Yb','Ytterbium',70,173.045,[2,8,18,32,8,2],'lanthanide'],
+['Lu','Lutetium',71,174.967,[2,8,18,32,9,2],'lanthanide'],
+['Hf','Hafnium',72,178.49,[2,8,18,32,10,2],'transition'],
+['Ta','Tantalum',73,180.948,[2,8,18,32,11,2],'transition'],
+['W','Tungsten',74,183.84,[2,8,18,32,12,2],'transition'],
+['Re','Rhenium',75,186.207,[2,8,18,32,13,2],'transition'],
+['Os','Osmium',76,190.23,[2,8,18,32,14,2],'transition'],
+['Ir','Iridium',77,192.217,[2,8,18,32,15,2],'transition'],
+['Pt','Platinum',78,195.084,[2,8,18,32,17,1],'transition'],
+['Au','Gold',79,196.967,[2,8,18,32,18,1],'transition'],
+['Hg','Mercury',80,200.592,[2,8,18,32,18,2],'transition'],
+['Tl','Thallium',81,204.38,[2,8,18,32,18,3],'post-transition'],
+['Pb','Lead',82,207.2,[2,8,18,32,18,4],'post-transition'],
+['Bi','Bismuth',83,208.980,[2,8,18,32,18,5],'post-transition'],
+['Po','Polonium',84,209,[2,8,18,32,18,6],'metalloid'],
+['At','Astatine',85,210,[2,8,18,32,18,7],'halogen'],
+['Rn','Radon',86,222,[2,8,18,32,18,8],'noble'],
+['Fr','Francium',87,223,[2,8,18,32,18,8,1],'alkali'],
+['Ra','Radium',88,226,[2,8,18,32,18,8,2],'alkaline'],
+['Ac','Actinium',89,227,[2,8,18,32,18,9,2],'actinide'],
+['Th','Thorium',90,232.038,[2,8,18,32,18,10,2],'actinide'],
+['Pa','Protactinium',91,231.036,[2,8,18,32,20,9,2],'actinide'],
+['U','Uranium',92,238.029,[2,8,18,32,21,9,2],'actinide'],
+['Np','Neptunium',93,237,[2,8,18,32,22,9,2],'actinide'],
+['Pu','Plutonium',94,244,[2,8,18,32,24,8,2],'actinide'],
+['Am','Americium',95,243,[2,8,18,32,25,8,2],'actinide'],
+['Cm','Curium',96,247,[2,8,18,32,25,9,2],'actinide'],
+['Bk','Berkelium',97,247,[2,8,18,32,27,8,2],'actinide'],
+['Cf','Californium',98,251,[2,8,18,32,28,8,2],'actinide'],
+['Es','Einsteinium',99,252,[2,8,18,32,29,8,2],'actinide'],
+['Fm','Fermium',100,257,[2,8,18,32,30,8,2],'actinide'],
+['Md','Mendelevium',101,258,[2,8,18,32,31,8,2],'actinide'],
+['No','Nobelium',102,259,[2,8,18,32,32,8,2],'actinide'],
+['Lr','Lawrencium',103,266,[2,8,18,32,32,9,2],'actinide'],
+['Rf','Rutherfordium',104,267,[2,8,18,32,32,10,2],'transition'],
+['Db','Dubnium',105,268,[2,8,18,32,32,11,2],'transition'],
+['Sg','Seaborgium',106,269,[2,8,18,32,32,12,2],'transition'],
+['Bh','Bohrium',107,270,[2,8,18,32,32,13,2],'transition'],
+['Hs','Hassium',108,277,[2,8,18,32,32,14,2],'transition'],
+['Mt','Meitnerium',109,278,[2,8,18,32,32,15,2],'transition'],
+['Ds','Darmstadtium',110,281,[2,8,18,32,32,16,2],'transition'],
+['Rg','Roentgenium',111,282,[2,8,18,32,32,17,2],'transition'],
+['Cn','Copernicium',112,285,[2,8,18,32,32,18,2],'transition'],
+['Nh','Nihonium',113,286,[2,8,18,32,32,18,3],'post-transition'],
+['Fl','Flerovium',114,289,[2,8,18,32,32,18,4],'post-transition'],
+['Mc','Moscovium',115,290,[2,8,18,32,32,18,5],'post-transition'],
+['Lv','Livermorium',116,293,[2,8,18,32,32,18,6],'post-transition'],
+['Ts','Tennessine',117,294,[2,8,18,32,32,18,7],'halogen'],
+['Og','Oganesson',118,294,[2,8,18,32,32,18,8],'noble'],
+];
+
+const bySymbol={}, byName={}, byZ={};
+RAW.forEach(([s,n,z,m,sh,c])=>{
+  const el={symbol:s,name:n,Z:z,mass:m,shells:sh,category:c};
+  bySymbol[s.toLowerCase()]=el;
+  byName[n.toLowerCase()]=el;
+  byZ[z]=el;
+});
+
+function findEl(q){
+  q=q.trim();
+  const n=parseInt(q);
+  if(!isNaN(n)&&byZ[n]) return byZ[n];
+  return bySymbol[q.toLowerCase()]||byName[q.toLowerCase()]||null;
+}
+
+// ── Colors ────────────────────────────────────────────────────────────────────
+const COLORS={
+  nonmetal:0x4499ff, noble:0xcc44ff, alkali:0xff5533,
+  alkaline:0xffaa22, transition:0x44aaff, 'post-transition':0x33ddbb,
+  metalloid:0x88ee44, halogen:0x22ffee, lanthanide:0xff88cc, actinide:0xbb88ff,
+};
+const CAT_LABEL={
+  nonmetal:'Reactive Nonmetal', noble:'Noble Gas', alkali:'Alkali Metal',
+  alkaline:'Alkaline Earth Metal', transition:'Transition Metal',
+  'post-transition':'Post-Transition Metal', metalloid:'Metalloid',
+  halogen:'Halogen', lanthanide:'Lanthanide', actinide:'Actinide',
+};
+
+// ── Three.js Setup ────────────────────────────────────────────────────────────
+const wrap=document.getElementById('wrap');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+wrap.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,wrap.clientWidth/wrap.clientHeight,0.1,600);
+camera.position.set(0,0,22);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.minDistance=3; controls.maxDistance=150;
+
+scene.add(new THREE.AmbientLight(0xffffff,0.35));
+const dir=new THREE.DirectionalLight(0xffffff,0.8);
+dir.position.set(5,10,7); scene.add(dir);
+
+// Starfield
+{
+  const N=3000, pos=new Float32Array(N*3);
+  for(let i=0;i<N*3;i++) pos[i]=(Math.random()-.5)*400;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.25,sizeAttenuation:true})));
+}
+
+window.addEventListener('resize',()=>{
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  camera.aspect=wrap.clientWidth/wrap.clientHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ── Atom State ────────────────────────────────────────────────────────────────
+let atomGroup=null, electronOrbits=[], currentEl=null;
+
+// Each shell gets a distinct 3D tilt so the model looks fully 3D
+const TILTS=[
+  [0,0,0],
+  [Math.PI/2,0,0],
+  [0,0,Math.PI/2],
+  [Math.PI/4,Math.PI/4,0],
+  [Math.PI/3,0,Math.PI/3],
+  [0,Math.PI/3,Math.PI/3],
+  [Math.PI*0.6,Math.PI*0.2,Math.PI*0.4],
+];
+
+function buildAtom(el){
+  if(atomGroup) scene.remove(atomGroup);
+  electronOrbits=[];
+  atomGroup=new THREE.Group();
+  scene.add(atomGroup);
+
+  const col=COLORS[el.category]||0xffffff;
+  const tc=new THREE.Color(col);
+
+  // Nucleus
+  const nr=0.5+Math.log(Math.max(el.Z,1))*0.28;
+  const nMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(nr,40,40),
+    new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.65,shininess:130})
+  );
+  atomGroup.add(nMesh);
+  const nLight=new THREE.PointLight(col,2.5,50);
+  atomGroup.add(nLight);
+
+  el.shells.forEach((count,idx)=>{
+    const shellR=nr+2.6+idx*2.9;
+    const tilt=TILTS[idx%TILTS.length];
+
+    const sg=new THREE.Group();
+    sg.rotation.set(...tilt);
+    atomGroup.add(sg);
+
+    // Ring (torus)
+    sg.add(new THREE.Mesh(
+      new THREE.TorusGeometry(shellR,0.07,8,100),
+      new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.25,transparent:true,opacity:0.55})
+    ));
+
+    // Electron orbit group (spins around local Z = normal of ring plane)
+    const orbit=new THREE.Group();
+    sg.add(orbit);
+    electronOrbits.push({orbit, speed:0.009/(idx*0.55+1)});
+
+    for(let e=0;e<count;e++){
+      const a=(e/count)*Math.PI*2;
+      const em=new THREE.Mesh(
+        new THREE.SphereGeometry(0.22,12,12),
+        new THREE.MeshPhongMaterial({color:0xffffff,emissive:0xaaccff,emissiveIntensity:0.9,shininess:200})
+      );
+      em.position.set(shellR*Math.cos(a), shellR*Math.sin(a), 0);
+      orbit.add(em);
+    }
+  });
+
+  // Fit camera
+  const maxR=nr+2.6+(el.shells.length-1)*2.9;
+  camera.position.set(0,0,maxR*2.6+8);
+  controls.target.set(0,0,0);
+  controls.update();
+}
+
+// ── STL Export ────────────────────────────────────────────────────────────────
+function exportSTL(){
+  if(!atomGroup||!currentEl) return;
+  const geos=[];
+  atomGroup.traverse(obj=>{
+    if(!obj.isMesh) return;
+    const g=obj.geometry.clone();
+    obj.updateWorldMatrix(true,false);
+    g.applyMatrix4(obj.matrixWorld);
+    // ensure consistent attributes: keep only position & normal
+    const p=g.attributes.position;
+    const n=g.attributes.normal||new THREE.BufferAttribute(new Float32Array(p.count*3),3);
+    const clean=new THREE.BufferGeometry();
+    clean.setAttribute('position',p);
+    clean.setAttribute('normal',n);
+    if(g.index) clean.setIndex(g.index);
+    geos.push(clean);
+  });
+  if(!geos.length) return;
+  const merged=BufferGeometryUtils.mergeGeometries(geos,false);
+  const blob=new Blob([new STLExporter().parse(new THREE.Mesh(merged),{binary:true})],
+    {type:'application/octet-stream'});
+  const a=Object.assign(document.createElement('a'),
+    {href:URL.createObjectURL(blob),download:`${currentEl.symbol}_atom.stl`});
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+const inp=document.getElementById('inp');
+const btnDl=document.getElementById('btn-dl');
+const errDiv=document.getElementById('err');
+const infoDiv=document.getElementById('info');
+const hint=document.getElementById('hint');
+
+function generate(){
+  const q=inp.value.trim();
+  if(!q) return;
+  const el=findEl(q);
+  errDiv.style.display='none';
+  if(!el){ errDiv.style.display='block'; infoDiv.style.display='none'; btnDl.style.display='none'; return; }
+  currentEl=el;
+  buildAtom(el);
+
+  const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
+  document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
+  const badge=document.getElementById('i-badge');
+  badge.textContent=CAT_LABEL[el.category]||el.category;
+  badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+
+  const shellLines=el.shells.map((n,i)=>`Shell ${i+1}: ${n} e⁻`).join('<br>');
+  document.getElementById('i-det').innerHTML=
+    `Atomic #: ${el.Z}<br>Atomic Mass: ${el.mass} u<br>`+
+    `Electrons: ${el.Z}<br>Shells: ${el.shells.length}<br><br>${shellLines}`;
+
+  infoDiv.style.display='block';
+  btnDl.style.display='';
+  hint.textContent='Drag to rotate  •  Scroll to zoom  •  Click Download STL to export';
+}
+
+inp.addEventListener('keydown',e=>{ if(e.key==='Enter') generate(); });
+document.getElementById('btn-gen').addEventListener('click',generate);
+btnDl.addEventListener('click',exportSTL);
+
+// ── Animation Loop ────────────────────────────────────────────────────────────
+(function animate(){
+  requestAnimationFrame(animate);
+  electronOrbits.forEach(({orbit,speed})=>{ orbit.rotation.z+=speed; });
+  controls.update();
+  renderer.render(scene,camera);
+})();
+
+// Default on load
+setTimeout(()=>{ inp.value='Carbon'; generate(); },200);
+</script>
+</body>
+</html>
