@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atom 3D Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060613;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{padding:12px 20px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+h1{font-size:1.3rem;font-weight:600;white-space:nowrap}
+.controls{display:flex;gap:8px;flex:1}
+input{flex:1;max-width:380px;padding:8px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.95rem;outline:none;transition:border-color .2s}
+input:focus{border-color:#5588ff}
+input::placeholder{color:rgba(255,255,255,.35)}
+.btn{padding:8px 16px;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:500;transition:opacity .15s,transform .1s}
+.btn:hover{opacity:.85}
+.btn:active{transform:scale(.97)}
+.btn-gen{background:#4466ff;color:#fff}
+.btn-dl{background:#22aa66;color:#fff;display:none}
+#wrap{flex:1;position:relative}
+canvas{display:block}
+#info{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.12);font-size:.82rem;line-height:1.9;min-width:180px;max-width:230px;max-height:calc(100vh - 100px);overflow-y:auto;display:none}
+#info h2{font-size:1.15rem;margin-bottom:4px}
+#btn-dl-panel{display:none;width:100%;margin-top:12px;padding:9px;background:#22aa66;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;letter-spacing:.3px;transition:opacity .15s}
+#btn-dl-panel:hover{opacity:.85}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.72rem;margin-bottom:8px}
+#hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);padding:7px 18px;border-radius:20px;font-size:.78rem;color:rgba(255,255,255,.5);pointer-events:none;white-space:nowrap}
+#err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,50,50,.12);border:1px solid rgba(255,80,80,.4);padding:16px 28px;border-radius:10px;color:#ffaaaa;display:none;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>⚛ Atom 3D Generator</h1>
+  <div class="controls">
+    <input id="inp" type="text" placeholder="Element name, symbol, or atomic number…" />
+    <button class="btn btn-gen" id="btn-gen">Generate</button>
+    <button class="btn btn-dl" id="btn-dl">⬇ Download STL</button>
+  </div>
+</header>
+<div id="wrap">
+  <div id="info">
+    <h2 id="i-name"></h2>
+    <span id="i-badge" class="badge"></span>
+    <div id="i-det"></div>
+    <button id="btn-dl-panel">⬇ Download STL</button>
+  </div>
+  <div id="err">Element not found. Try "Carbon", "Fe", or "26".</div>
+  <div id="hint">Enter an element above to begin</div>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+// ── Element Data: [symbol, name, Z, mass, shells[], category] ────────────────
+const RAW = [
+['H','Hydrogen',1,1.008,[1],'nonmetal'],
+['He','Helium',2,4.003,[2],'noble'],
+['Li','Lithium',3,6.941,[2,1],'alkali'],
+['Be','Beryllium',4,9.012,[2,2],'alkaline'],
+['B','Boron',5,10.811,[2,3],'metalloid'],
+['C','Carbon',6,12.011,[2,4],'nonmetal'],
+['N','Nitrogen',7,14.007,[2,5],'nonmetal'],
+['O','Oxygen',8,15.999,[2,6],'nonmetal'],
+['F','Fluorine',9,18.998,[2,7],'halogen'],
+['Ne','Neon',10,20.180,[2,8],'noble'],
+['Na','Sodium',11,22.990,[2,8,1],'alkali'],
+['Mg','Magnesium',12,24.305,[2,8,2],'alkaline'],
+['Al','Aluminum',13,26.982,[2,8,3],'post-transition'],
+['Si','Silicon',14,28.086,[2,8,4],'metalloid'],
+['P','Phosphorus',15,30.974,[2,8,5],'nonmetal'],
+['S','Sulfur',16,32.065,[2,8,6],'nonmetal'],
+['Cl','Chlorine',17,35.453,[2,8,7],'halogen'],
+['Ar','Argon',18,39.948,[2,8,8],'noble'],
+['K','Potassium',19,39.098,[2,8,8,1],'alkali'],
+['Ca','Calcium',20,40.078,[2,8,8,2],'alkaline'],
+['Sc','Scandium',21,44.956,[2,8,9,2],'transition'],
+['Ti','Titanium',22,47.867,[2,8,10,2],'transition'],
+['V','Vanadium',23,50.942,[2,8,11,2],'transition'],
+['Cr','Chromium',24,51.996,[2,8,13,1],'transition'],
+['Mn','Manganese',25,54.938,[2,8,13,2],'transition'],
+['Fe','Iron',26,55.845,[2,8,14,2],'transition'],
+['Co','Cobalt',27,58.933,[2,8,15,2],'transition'],
+['Ni','Nickel',28,58.693,[2,8,16,2],'transition'],
+['Cu','Copper',29,63.546,[2,8,18,1],'transition'],
+['Zn','Zinc',30,65.38,[2,8,18,2],'transition'],
+['Ga','Gallium',31,69.723,[2,8,18,3],'post-transition'],
+['Ge','Germanium',32,72.630,[2,8,18,4],'metalloid'],
+['As','Arsenic',33,74.922,[2,8,18,5],'metalloid'],
+['Se','Selenium',34,78.971,[2,8,18,6],'nonmetal'],
+['Br','Bromine',35,79.904,[2,8,18,7],'halogen'],
+['Kr','Krypton',36,83.798,[2,8,18,8],'noble'],
+['Rb','Rubidium',37,85.468,[2,8,18,8,1],'alkali'],
+['Sr','Strontium',38,87.62,[2,8,18,8,2],'alkaline'],
+['Y','Yttrium',39,88.906,[2,8,18,9,2],'transition'],
+['Zr','Zirconium',40,91.224,[2,8,18,10,2],'transition'],
+['Nb','Niobium',41,92.906,[2,8,18,12,1],'transition'],
+['Mo','Molybdenum',42,95.95,[2,8,18,13,1],'transition'],
+['Tc','Technetium',43,97,[2,8,18,13,2],'transition'],
+['Ru','Ruthenium',44,101.07,[2,8,18,15,1],'transition'],
+['Rh','Rhodium',45,102.906,[2,8,18,16,1],'transition'],
+['Pd','Palladium',46,106.42,[2,8,18,18],'transition'],
+['Ag','Silver',47,107.868,[2,8,18,18,1],'transition'],
+['Cd','Cadmium',48,112.414,[2,8,18,18,2],'transition'],
+['In','Indium',49,114.818,[2,8,18,18,3],'post-transition'],
+['Sn','Tin',50,118.710,[2,8,18,18,4],'post-transition'],
+['Sb','Antimony',51,121.760,[2,8,18,18,5],'metalloid'],
+['Te','Tellurium',52,127.60,[2,8,18,18,6],'metalloid'],
+['I','Iodine',53,126.904,[2,8,18,18,7],'halogen'],
+['Xe','Xenon',54,131.293,[2,8,18,18,8],'noble'],
+['Cs','Cesium',55,132.905,[2,8,18,18,8,1],'alkali'],
+['Ba','Barium',56,137.327,[2,8,18,18,8,2],'alkaline'],
+['La','Lanthanum',57,138.905,[2,8,18,18,9,2],'lanthanide'],
+['Ce','Cerium',58,140.116,[2,8,18,19,9,2],'lanthanide'],
+['Pr','Praseodymium',59,140.908,[2,8,18,21,8,2],'lanthanide'],
+['Nd','Neodymium',60,144.242,[2,8,18,22,8,2],'lanthanide'],
+['Pm','Promethium',61,145,[2,8,18,23,8,2],'lanthanide'],
+['Sm','Samarium',62,150.36,[2,8,18,24,8,2],'lanthanide'],
+['Eu','Europium',63,151.964,[2,8,18,25,8,2],'lanthanide'],
+['Gd','Gadolinium',64,157.25,[2,8,18,25,9,2],'lanthanide'],
+['Tb','Terbium',65,158.925,[2,8,18,27,8,2],'lanthanide'],
+['Dy','Dysprosium',66,162.500,[2,8,18,28,8,2],'lanthanide'],
+['Ho','Holmium',67,164.930,[2,8,18,29,8,2],'lanthanide'],
+['Er','Erbium',68,167.259,[2,8,18,30,8,2],'lanthanide'],
+['Tm','Thulium',69,168.934,[2,8,18,31,8,2],'lanthanide'],
+['Yb','Ytterbium',70,173.045,[2,8,18,32,8,2],'lanthanide'],
+['Lu','Lutetium',71,174.967,[2,8,18,32,9,2],'lanthanide'],
+['Hf','Hafnium',72,178.49,[2,8,18,32,10,2],'transition'],
+['Ta','Tantalum',73,180.948,[2,8,18,32,11,2],'transition'],
+['W','Tungsten',74,183.84,[2,8,18,32,12,2],'transition'],
+['Re','Rhenium',75,186.207,[2,8,18,32,13,2],'transition'],
+['Os','Osmium',76,190.23,[2,8,18,32,14,2],'transition'],
+['Ir','Iridium',77,192.217,[2,8,18,32,15,2],'transition'],
+['Pt','Platinum',78,195.084,[2,8,18,32,17,1],'transition'],
+['Au','Gold',79,196.967,[2,8,18,32,18,1],'transition'],
+['Hg','Mercury',80,200.592,[2,8,18,32,18,2],'transition'],
+['Tl','Thallium',81,204.38,[2,8,18,32,18,3],'post-transition'],
+['Pb','Lead',82,207.2,[2,8,18,32,18,4],'post-transition'],
+['Bi','Bismuth',83,208.980,[2,8,18,32,18,5],'post-transition'],
+['Po','Polonium',84,209,[2,8,18,32,18,6],'metalloid'],
+['At','Astatine',85,210,[2,8,18,32,18,7],'halogen'],
+['Rn','Radon',86,222,[2,8,18,32,18,8],'noble'],
+['Fr','Francium',87,223,[2,8,18,32,18,8,1],'alkali'],
+['Ra','Radium',88,226,[2,8,18,32,18,8,2],'alkaline'],
+['Ac','Actinium',89,227,[2,8,18,32,18,9,2],'actinide'],
+['Th','Thorium',90,232.038,[2,8,18,32,18,10,2],'actinide'],
+['Pa','Protactinium',91,231.036,[2,8,18,32,20,9,2],'actinide'],
+['U','Uranium',92,238.029,[2,8,18,32,21,9,2],'actinide'],
+['Np','Neptunium',93,237,[2,8,18,32,22,9,2],'actinide'],
+['Pu','Plutonium',94,244,[2,8,18,32,24,8,2],'actinide'],
+['Am','Americium',95,243,[2,8,18,32,25,8,2],'actinide'],
+['Cm','Curium',96,247,[2,8,18,32,25,9,2],'actinide'],
+['Bk','Berkelium',97,247,[2,8,18,32,27,8,2],'actinide'],
+['Cf','Californium',98,251,[2,8,18,32,28,8,2],'actinide'],
+['Es','Einsteinium',99,252,[2,8,18,32,29,8,2],'actinide'],
+['Fm','Fermium',100,257,[2,8,18,32,30,8,2],'actinide'],
+['Md','Mendelevium',101,258,[2,8,18,32,31,8,2],'actinide'],
+['No','Nobelium',102,259,[2,8,18,32,32,8,2],'actinide'],
+['Lr','Lawrencium',103,266,[2,8,18,32,32,9,2],'actinide'],
+['Rf','Rutherfordium',104,267,[2,8,18,32,32,10,2],'transition'],
+['Db','Dubnium',105,268,[2,8,18,32,32,11,2],'transition'],
+['Sg','Seaborgium',106,269,[2,8,18,32,32,12,2],'transition'],
+['Bh','Bohrium',107,270,[2,8,18,32,32,13,2],'transition'],
+['Hs','Hassium',108,277,[2,8,18,32,32,14,2],'transition'],
+['Mt','Meitnerium',109,278,[2,8,18,32,32,15,2],'transition'],
+['Ds','Darmstadtium',110,281,[2,8,18,32,32,16,2],'transition'],
+['Rg','Roentgenium',111,282,[2,8,18,32,32,17,2],'transition'],
+['Cn','Copernicium',112,285,[2,8,18,32,32,18,2],'transition'],
+['Nh','Nihonium',113,286,[2,8,18,32,32,18,3],'post-transition'],
+['Fl','Flerovium',114,289,[2,8,18,32,32,18,4],'post-transition'],
+['Mc','Moscovium',115,290,[2,8,18,32,32,18,5],'post-transition'],
+['Lv','Livermorium',116,293,[2,8,18,32,32,18,6],'post-transition'],
+['Ts','Tennessine',117,294,[2,8,18,32,32,18,7],'halogen'],
+['Og','Oganesson',118,294,[2,8,18,32,32,18,8],'noble'],
+];
+
+const bySymbol={}, byName={}, byZ={};
+RAW.forEach(([s,n,z,m,sh,c])=>{
+  const el={symbol:s,name:n,Z:z,mass:m,shells:sh,category:c};
+  bySymbol[s.toLowerCase()]=el;
+  byName[n.toLowerCase()]=el;
+  byZ[z]=el;
+});
+
+function findEl(q){
+  q=q.trim();
+  const n=parseInt(q);
+  if(!isNaN(n)&&byZ[n]) return byZ[n];
+  return bySymbol[q.toLowerCase()]||byName[q.toLowerCase()]||null;
+}
+
+// ── Colors ────────────────────────────────────────────────────────────────────
+const COLORS={
+  nonmetal:0x4499ff, noble:0xcc44ff, alkali:0xff5533,
+  alkaline:0xffaa22, transition:0x44aaff, 'post-transition':0x33ddbb,
+  metalloid:0x88ee44, halogen:0x22ffee, lanthanide:0xff88cc, actinide:0xbb88ff,
+};
+const CAT_LABEL={
+  nonmetal:'Reactive Nonmetal', noble:'Noble Gas', alkali:'Alkali Metal',
+  alkaline:'Alkaline Earth Metal', transition:'Transition Metal',
+  'post-transition':'Post-Transition Metal', metalloid:'Metalloid',
+  halogen:'Halogen', lanthanide:'Lanthanide', actinide:'Actinide',
+};
+
+// ── Three.js Setup ────────────────────────────────────────────────────────────
+const wrap=document.getElementById('wrap');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+wrap.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,wrap.clientWidth/wrap.clientHeight,0.1,600);
+camera.position.set(0,0,22);
+
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.06;
+controls.minDistance=3; controls.maxDistance=150;
+
+scene.add(new THREE.AmbientLight(0xffffff,0.35));
+const dir=new THREE.DirectionalLight(0xffffff,0.8);
+dir.position.set(5,10,7); scene.add(dir);
+
+// Starfield
+{
+  const N=3000, pos=new Float32Array(N*3);
+  for(let i=0;i<N*3;i++) pos[i]=(Math.random()-.5)*400;
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  scene.add(new THREE.Points(geo,new THREE.PointsMaterial({color:0xffffff,size:0.25,sizeAttenuation:true})));
+}
+
+window.addEventListener('resize',()=>{
+  renderer.setSize(wrap.clientWidth,wrap.clientHeight);
+  camera.aspect=wrap.clientWidth/wrap.clientHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ── Atom State ────────────────────────────────────────────────────────────────
+let atomGroup=null, electronOrbits=[], currentEl=null;
+
+// Each shell gets a distinct 3D tilt so the model looks fully 3D
+const TILTS=[
+  [0,0,0],
+  [Math.PI/2,0,0],
+  [0,0,Math.PI/2],
+  [Math.PI/4,Math.PI/4,0],
+  [Math.PI/3,0,Math.PI/3],
+  [0,Math.PI/3,Math.PI/3],
+  [Math.PI*0.6,Math.PI*0.2,Math.PI*0.4],
+];
+
+function buildAtom(el){
+  if(atomGroup) scene.remove(atomGroup);
+  electronOrbits=[];
+  atomGroup=new THREE.Group();
+  scene.add(atomGroup);
+
+  const col=COLORS[el.category]||0xffffff;
+  const tc=new THREE.Color(col);
+
+  // Nucleus
+  const nr=0.5+Math.log(Math.max(el.Z,1))*0.28;
+  const nMesh=new THREE.Mesh(
+    new THREE.SphereGeometry(nr,40,40),
+    new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.65,shininess:130})
+  );
+  atomGroup.add(nMesh);
+  const nLight=new THREE.PointLight(col,2.5,50);
+  atomGroup.add(nLight);
+
+  el.shells.forEach((count,idx)=>{
+    const shellR=nr+2.6+idx*2.9;
+    const tilt=TILTS[idx%TILTS.length];
+
+    const sg=new THREE.Group();
+    sg.rotation.set(...tilt);
+    atomGroup.add(sg);
+
+    // Ring (torus)
+    sg.add(new THREE.Mesh(
+      new THREE.TorusGeometry(shellR,0.07,8,100),
+      new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.25,transparent:true,opacity:0.55})
+    ));
+
+    // Electron orbit group (spins around local Z = normal of ring plane)
+    const orbit=new THREE.Group();
+    sg.add(orbit);
+    electronOrbits.push({orbit, speed:0.009/(idx*0.55+1)});
+
+    for(let e=0;e<count;e++){
+      const a=(e/count)*Math.PI*2;
+      const em=new THREE.Mesh(
+        new THREE.SphereGeometry(0.22,12,12),
+        new THREE.MeshPhongMaterial({color:0xffffff,emissive:0xaaccff,emissiveIntensity:0.9,shininess:200})
+      );
+      em.position.set(shellR*Math.cos(a), shellR*Math.sin(a), 0);
+      orbit.add(em);
+    }
+  });
+
+  // Fit camera
+  const maxR=nr+2.6+(el.shells.length-1)*2.9;
+  camera.position.set(0,0,maxR*2.6+8);
+  controls.target.set(0,0,0);
+  controls.update();
+}
+
+// ── STL Export ────────────────────────────────────────────────────────────────
+function exportSTL(){
+  if(!atomGroup||!currentEl) return;
+  const geos=[];
+  atomGroup.traverse(obj=>{
+    if(!obj.isMesh) return;
+    const g=obj.geometry.clone();
+    obj.updateWorldMatrix(true,false);
+    g.applyMatrix4(obj.matrixWorld);
+    // ensure consistent attributes: keep only position & normal
+    const p=g.attributes.position;
+    const n=g.attributes.normal||new THREE.BufferAttribute(new Float32Array(p.count*3),3);
+    const clean=new THREE.BufferGeometry();
+    clean.setAttribute('position',p);
+    clean.setAttribute('normal',n);
+    if(g.index) clean.setIndex(g.index);
+    geos.push(clean);
+  });
+  if(!geos.length) return;
+  const merged=BufferGeometryUtils.mergeGeometries(geos,false);
+  const blob=new Blob([new STLExporter().parse(new THREE.Mesh(merged),{binary:true})],
+    {type:'application/octet-stream'});
+  const a=Object.assign(document.createElement('a'),
+    {href:URL.createObjectURL(blob),download:`${currentEl.symbol}_atom.stl`});
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+
+// ── Fun Facts ────────────────────────────────────────────────────────────────
+const FACTS={
+  H:['Most abundant element in the universe — makes up ~75% of all normal matter.','The Sun fuses ~600 million tons of hydrogen every second.','A single gram contains more atoms than there are stars in the Milky Way.'],
+  He:['Second most abundant element in the universe but rare on Earth.','So light it escapes Earth\'s gravity and leaks into space.','The only element that stays liquid all the way to absolute zero (under pressure).'],
+  Li:['Lightest solid metal — it floats on water.','Powers the batteries in almost every phone and laptop.','Used in mood-stabilizing medications.'],
+  Be:['One of the lightest structural metals, incredibly stiff for its weight.','Transparent to X-rays, used in X-ray machine windows.','Toxic if inhaled as dust.'],
+  B:['Harder than most metals, yet classified as a metalloid.','Key ingredient in borax, used in cleaning products for centuries.','Some boron compounds glow green in flame tests.'],
+  C:['The basis of all known life on Earth.','Diamond and graphite are both pure carbon, yet completely different.','Carbon-14 lets scientists date ancient artifacts up to ~50,000 years old.'],
+  N:['Makes up 78% of Earth\'s atmosphere.','Liquid nitrogen boils at −196 °C and is used to freeze things instantly.','All DNA and protein in your body contains nitrogen.'],
+  O:['The third most abundant element in the universe.','Responsible for rusting, burning, and keeping you alive.','Liquid oxygen is pale blue and strongly magnetic.'],
+  F:['The most reactive and electronegative element of all.','A tiny amount added to drinking water prevents tooth decay.','Teflon (non-stick coating) is a fluorine compound.'],
+  Ne:['Produces the classic red-orange glow in neon signs.','10× lighter than air yet glows brighter than most gases.','Completely inert — it has never formed a stable chemical compound.'],
+  Na:['Pure sodium metal explodes violently when dropped in water.','Table salt is sodium bonded with chlorine (NaCl).','Your nervous system uses sodium ions to transmit signals.'],
+  Mg:['Burns with a brilliant white flame too bright to look at directly.','The human body contains about 25 grams of magnesium.','Magnesium alloys are used in aircraft frames to save weight.'],
+  Al:['Third most abundant element in Earth\'s crust.','Was once more valuable than gold — Napoleon served honored guests with aluminum cutlery.','Recycling aluminum uses only 5% of the energy needed to make it from ore.'],
+  Si:['Second most abundant element in Earth\'s crust after oxygen.','The backbone of the entire semiconductor and computer chip industry.','Sand and glass are both largely silicon dioxide (SiO₂).'],
+  P:['Essential for DNA, RNA, and ATP — life cannot exist without it.','White phosphorus glows faintly in the dark (phosphorescence).','Phosphorus was first isolated from urine in 1669.'],
+  S:['Burns with a distinctive blue flame and choking smell.','Vulcanized rubber — used in car tires — is made with sulfur.','Over a billion tons of sulfur are produced industrially every year.'],
+  Cl:['Widely used to disinfect drinking water and swimming pools.','Chlorine gas was used as a chemical weapon in WWI.','Your stomach acid contains hydrochloric acid (HCl).'],
+  Ar:['The third most abundant gas in Earth\'s atmosphere (~1%).','Completely inert — used to fill light bulbs and weld metals safely.','Its name comes from the Greek word for "lazy."'],
+  K:['Vital for heart function — a lack causes dangerous arrhythmias.','Reacts so violently with water it can ignite spontaneously.','Bananas are famously rich in potassium.'],
+  Ca:['The most abundant metal in the human body (~1 kg in an adult).','Bones and teeth are largely calcium phosphate.','Calcium compounds give fireworks a red-orange color.'],
+  Sc:['So rare that only a few hundred kg are produced globally per year.','Used in high-intensity stadium lighting (HID lamps).','Discovered in 1879 by Lars Fredrik Nilson, who named it after Scandinavia.'],
+  Ti:['As strong as steel but 45% lighter.','Completely biocompatible — used for bone implants and dental screws.','Titanium dioxide is the brilliant white pigment in most paints and sunscreens.'],
+  V:['Used to make ultra-hard steel alloys for tools and armor.','Vanadium pentoxide is a key industrial catalyst.','Named after Vanadis, a Norse goddess of beauty.'],
+  Cr:['The "chrom" in chrome plating — gives steel its stainless quality.','Chromium compounds produce the red in rubies and the green in emeralds.','Pure chromium is so hard it can scratch glass.'],
+  Mn:['Essential trace element in every living organism.','Added to steel to dramatically increase toughness.','Manganese nodules litter vast areas of the ocean floor.'],
+  Fe:['The most abundant element by mass in the entire Earth.','Your blood\'s red color comes from iron in hemoglobin.','Iron from ancient meteorites was used for tools before smelting was invented.'],
+  Co:['The metal that gives cobalt-blue glass and ceramics their vivid color.','Radioactive cobalt-60 is used to treat cancer.','Vitamin B12 — essential for nerves and blood — contains a cobalt atom at its core.'],
+  Ni:['Makes up about 5% of the Earth\'s core.','A US nickel coin is actually 75% copper and only 25% nickel.','Used in rechargeable batteries and stainless steel.'],
+  Cu:['One of the first metals ever smelted — used for over 10,000 years.','Copper is naturally antimicrobial; door handles in hospitals kill bacteria.','The Statue of Liberty is covered in 80 tons of copper, now green from oxidation.'],
+  Zn:['The human body contains ~2 g of zinc — needed for over 300 enzymes.','Galvanized steel is coated in zinc to prevent rusting.','Zinc oxide makes sunscreen white and UV-blocking.'],
+  Ga:['Melts in your hand — its melting point is just 29.7 °C.','Gallium arsenide powers LEDs and solar cells.','Predicted by Mendeleev years before it was discovered.'],
+  Ge:['The first practical semiconductor — used in early transistors.','Has an unusually high refractive index, used in fiber-optic cables.','Also predicted by Mendeleev, who called it "eka-silicon."'],
+  As:['Famous as a historical poison, but in tiny amounts it\'s used in medicine.','Semiconducting arsenic compounds are used in LEDs and laser diodes.','Found naturally in some groundwater, causing contamination crises worldwide.'],
+  Se:['Essential trace element — too little causes deficiency, too much is toxic.','Selenium gives a vivid red/orange color to glass.','Used in photocopiers (xerography) since the 1950s.'],
+  Br:['One of only two elements that are liquid at room temperature (the other is mercury).','Bromine compounds were the first effective sedatives and anti-seizure drugs.','The word comes from Greek "bromos" meaning stench.'],
+  Kr:['Used in high-performance camera flash lamps and lasers.','Krypton-86 was once the official definition of the meter.','Even Superman\'s fictional homeworld was named after this element.'],
+  Rb:['So reactive it must be stored under mineral oil or in a vacuum.','Used in atomic clocks accurate to within 1 second per 300 years.','Burns with a brilliant violet-red flame.'],
+  Sr:['Strontium-90 is a dangerous radioactive fallout product from nuclear explosions.','Gives fireworks their vivid crimson red color.','Strontium is chemically so similar to calcium it can replace it in bones.'],
+  Y:['Used to make the red phosphor in old color TV screens.','Yttrium-aluminum garnet (YAG) is used in the most common type of laser.','Named after Ytterby, a Swedish village that also lent its name to three other elements.'],
+  Zr:['Extremely resistant to corrosion — used to line nuclear reactors.','Cubic zirconia (ZrO₂) is a popular diamond simulant in jewelry.','Zirconium crystals are among the oldest minerals ever found on Earth (4.4 billion years old).'],
+  Nb:['Used in superconducting magnets in MRI machines.','Adding a tiny amount to steel greatly increases its strength.','Named after Niobe, daughter of Tantalus in Greek mythology.'],
+  Mo:['Has the sixth-highest melting point of any element (2,623 °C).','Critical alloying element in stainless steel used in aircraft and pipelines.','Essential trace element — the enzyme that fixes nitrogen in plants contains molybdenum.'],
+  Tc:['The lightest element with no stable isotopes — all are radioactive.','Technetium-99m is the most widely used radioactive isotope in medical imaging.','First element to be artificially produced (1937, in a cyclotron).'],
+  Ru:['One of the rarest elements in Earth\'s crust.','Used as a catalyst in fuel cells and in hard disk coatings.','Ruthenium tetroxide is so reactive and toxic it must be handled with extreme care.'],
+  Rh:['One of the most expensive metals on Earth — often pricier than gold.','The catalytic converter in your car uses rhodium to neutralize exhaust gases.','Rhodium plating gives jewelry a mirror-bright finish.'],
+  Pd:['Absorbs up to 900 times its own volume of hydrogen gas.','Along with platinum and rhodium, it cleans car exhaust in catalytic converters.','Named after the asteroid Pallas, discovered around the same time.'],
+  Ag:['Best electrical and thermal conductor of all metals.','Silver ions are naturally antimicrobial — used in wound dressings.','Most of Earth\'s silver comes from asteroid impacts billions of years ago.'],
+  Cd:['Extremely toxic — cadmium poisoning causes "itai-itai" (ouch-ouch) disease.','Used in nickel-cadmium rechargeable batteries.','Cadmium yellow was a favorite pigment of Impressionist painters.'],
+  In:['So soft you can scratch it with a fingernail.','Indium tin oxide (ITO) is the transparent conductor on every touchscreen.','Global indium supply mostly comes as a byproduct of zinc refining.'],
+  Sn:['One of the first metals smelted — tin bronze powered the Bronze Age.','At very low temperatures, tin crumbles into powder ("tin pest"), which destroyed Napoleon\'s army\'s buttons in Russia.','The "tin" can is actually mostly steel with a thin tin coating.'],
+  Sb:['Used as a flame retardant in plastics and textiles.','Ancient Egyptians used antimony sulfide as kohl eyeliner.','One of the few substances that expands when it solidifies (like water and bismuth).'],
+  Te:['One of the rarest stable elements in Earth\'s crust — rarer than gold.','Used in CDs, DVDs, and phase-change memory chips.','Named after Earth (Tellus), in contrast to its companion element uranium named after Uranus.'],
+  I:['Essential for thyroid hormone production — iodine deficiency causes goiter.','Iodine vapor is a vivid purple color.','Used as an antiseptic — the brown solution is iodine dissolved in alcohol.'],
+  Xe:['Used in the powerful headlights of luxury cars and in ion thrusters for spacecraft.','Xenon can form compounds with fluorine and oxygen despite being a noble gas.','Ion engines on NASA\'s Dawn spacecraft used xenon propellant.'],
+  Cs:['The most electropositive and reactive of all stable metals.','Caesium atomic clocks define the official length of one second.','Melts at just 28.5 °C — barely above room temperature.'],
+  Ba:['Barium sulfate is swallowed as a "barium meal" for X-ray imaging of the gut.','Reacts explosively with water — stored under mineral oil.','Gives fireworks a brilliant apple-green color.'],
+  La:['First of the lanthanide series.','Used in camera lenses and telescope glass for its high refractive index.','La₂O₃ is used in high-performance optical fibers.'],
+  Ce:['Most abundant of the rare earth elements — more common than copper.','Used as a catalytic converter additive to reduce emissions.','Cerium compounds polish the glass in your phone screen and camera lenses.'],
+  Pr:['Its green salts are used to color glass and ceramics.','Praseodymium-neodymium alloy magnets are extremely powerful.','Used in aircraft engines to strengthen magnesium alloys.'],
+  Nd:['Key ingredient in the strongest permanent magnets ever made (NdFeB).','Neodymium magnets are in every electric motor, hard drive, and loudspeaker.','Gives a vivid purple-pink color to glass.'],
+  Pm:['The only lanthanide with no stable isotopes — entirely radioactive.','So rare on Earth that essentially all promethium is artificially produced.','Named after Prometheus, the Titan who stole fire from the gods.'],
+  Sm:['Samarium-cobalt magnets work at higher temperatures than neodymium magnets.','Samarium-153 is used in targeted cancer therapy.','One of the first elements identified by spectroscopy in the 1870s.'],
+  Eu:['Produces the red and blue colors in Euro banknotes as an anti-counterfeiting measure.','The most efficient phosphorescent material known — used in energy-saving light bulbs.','Named after the continent of Europe.'],
+  Gd:['Gadolinium contrast agents are injected to enhance MRI scans.','Has the highest neutron-absorption cross section of any stable element.','Becomes ferromagnetic just below room temperature (Curie point: 20 °C).'],
+  Tb:['Produces the green phosphor in fluorescent lamps and TV screens.','Terbinafine (antifungal medication) is named after it.','Also named after Ytterby — one of four elements to claim that honor.'],
+  Dy:['Key dopant in neodymium magnets to make them work at high temperatures.','Dysprosium was named from the Greek for "hard to get" — it was notoriously difficult to isolate.','Has the highest magnetic moment of any element.'],
+  Ho:['Has the highest magnetic moment of any naturally occurring element.','Holmium lasers are used in eye, prostate, and kidney surgery.','Named after Stockholm (Holmia in Latin).'],
+  Er:['The pink/red color in some glasses and sunglasses comes from erbium oxide.','Erbium-doped fiber amplifiers (EDFAs) are the backbone of long-distance internet cables.','Also from Ytterby — along with Tb, Yb, and Y.'],
+  Tm:['The rarest of the naturally occurring lanthanides.','Thulium-170 is used in portable X-ray devices that need no power source.','Named after Thule, the ancient name for the far north of the world.'],
+  Yb:['Used in atomic clocks that are even more precise than caesium clocks.','Ytterbium under high pressure becomes a superconductor.','Fourth element named after Ytterby, Sweden.'],
+  Lu:['The heaviest and hardest of the lanthanides.','Lutetium oxyorthosilicate (LSO) crystals are used in PET scanners.','Named after Lutetia, the Roman name for Paris.'],
+  Hf:['Looks almost identical to zirconium but is much denser.','Used in nuclear reactor control rods because it absorbs neutrons so well.','Intel uses hafnium oxide in modern CPU transistor gates.'],
+  Ta:['Incredibly corrosion-resistant — can survive boiling sulfuric acid.','Used in surgical implants and capacitors inside mobile phones.','Named after Tantalus of Greek myth — its ore tantalite is nearly inseparable from niobite.'],
+  W:['Highest melting point of any element: 3,422 °C.','Tungsten filaments in incandescent light bulbs burn for thousands of hours.','The symbol W comes from "Wolfram," its German name.'],
+  Re:['Second-highest melting point of any element.','Used in jet engine turbine blades that must survive extreme heat.','One of the last naturally occurring elements to be discovered (1925).'],
+  Os:['Densest naturally occurring element — 22.59 g/cm³.','Osmium tetroxide has a distinctive, extremely pungent smell.','Used to harden fountain pen nibs and electrical contacts.'],
+  Ir:['Second densest element and most corrosion-resistant metal.','The Cretaceous–Paleogene extinction boundary is marked by a global iridium-rich layer from an asteroid.','Used in the international prototype kilogram (until 2019).'],
+  Pt:['Catalytic converters in cars use platinum to oxidize harmful gases.','Platinum group metals are so rare that all ever mined would fill a room.','Considered a symbol of luxury — worth roughly twice gold by weight.'],
+  Au:['So chemically inert that gold artifacts survive for thousands of years unchanged.','All gold on Earth was delivered by asteroid impacts after the planet formed.','The entire world\'s mined gold would fit inside a ~21-meter cube.'],
+  Hg:['The only metal liquid at room temperature.','Mercury\'s density is so high that a cannon ball will float in it.','Once used in thermometers, barometers, and hat-making (hence "mad as a hatter").'],
+  Tl:['Highly toxic — thallium poisoning was once used as a covert assassination method.','Used in infrared detectors and some types of glass.','Agatha Christie featured thallium poisoning in her mystery novel "The Pale Horse."'],
+  Pb:['Romans used lead pipes and vessels extensively — possibly contributing to the fall of Rome.','Has been used for radiation shielding since the discovery of X-rays.','A standard lead brick used in labs weighs about 5 kg.'],
+  Bi:['The heaviest element with a stable (or near-stable) isotope.','Pepto-Bismol\'s pink color and stomach-settling power both come from bismuth subsalicylate.','Forms spectacular rainbow-colored iridescent crystals with a geometric staircase shape.'],
+  Po:['One of the rarest naturally occurring elements on Earth.','Polonium-210 is 250 billion times more toxic than hydrogen cyanide.','Named by Marie Curie after her homeland Poland.'],
+  At:['The rarest naturally occurring element — at most 28 g exists in Earth\'s entire crust at any time.','All astatine on Earth comes from the radioactive decay of heavier elements.','Half-life of the most stable isotope is only 8.1 hours.'],
+  Rn:['A radioactive gas that seeps into basements from soil and rock — a real health hazard.','Formed as a decay product of uranium and thorium in the ground.','Was used in early radiation cancer therapy.'],
+  Fr:['The second rarest naturally occurring element after astatine.','So unstable that its longest-lived isotope has a 22-minute half-life.','Never produced in visible amounts — only a few thousand atoms at a time.'],
+  Ra:['Discovered by Marie and Pierre Curie in 1898 — winning Marie her first Nobel Prize.','Was once added to watches, clocks, and toys to make them glow — with deadly consequences.','A gram of radium-226 produces about 1 mL of radon gas per day.'],
+  Ac:['So intensely radioactive it glows blue in the dark from Cherenkov radiation.','Used in targeted alpha-therapy for cancer treatment.','Only about 2,000 kg of actinium-227 exists in Earth\'s crust.'],
+  Th:['Contains more energy per kg than uranium — could fuel civilization for thousands of years.','Thorium-based nuclear reactors produce far less long-lived radioactive waste.','Old gas lantern mantles were made with radioactive thorium oxide.'],
+  Pa:['One of the rarest and most toxic of the actinides.','Has no known biological role and is considered purely hazardous.','Getting a visible sample requires processing tons of uranium ore.'],
+  U:['Energy density is extraordinary — 1 kg of uranium-235 yields as much energy as 3,000 tons of coal.','Depleted uranium is used in armor-piercing ammunition for its extreme density.','The Earth\'s internal heat is partly powered by decaying uranium.'],
+  Np:['First transuranic element ever synthesized (1940).','Named after Neptune, the planet beyond Uranus (uranium).','Neptunium-237 is produced in nuclear reactors and has a 2.1-million-year half-life.'],
+  Pu:['About 8 kg of plutonium-239 is enough to make a nuclear bomb.','Plutonium\'s heat from radioactive decay powered Voyager 1 and 2 on their interstellar journeys.','Has six different solid phases — more than any other element.'],
+  Am:['Found in nearly every household smoke detector (americium-241).','Synthesized by bombarding plutonium with neutrons in a reactor.','Named after the Americas, following the pattern of its predecessor europium (Europe).'],
+  Cm:['So intensely radioactive it glows red-hot from its own energy.','Used as a power source and alpha-particle source in space probes.','Named in honor of Marie and Pierre Curie.'],
+  Bk:['Named after Berkeley, California, where it was first synthesized.','Has no known uses outside of scientific research.','Only a few micrograms have ever been produced.'],
+  Cf:['Used in portable neutron sources for oil well logging and metal detection.','Californium-252 is so radioactive that 1 microgram emits 170 million neutrons per minute.','One of the most expensive materials on Earth — ~$27 million per gram.'],
+  Es:['Discovered in the debris of the first hydrogen bomb test (Ivy Mike, 1952).','Named after Albert Einstein.','Has no practical uses — only exists in microscopic quantities for research.'],
+  Fm:['Named after Enrico Fermi, pioneer of nuclear reactor design.','Also discovered in the Ivy Mike nuclear test fallout.','The heaviest element that can be produced by neutron bombardment in a reactor.'],
+  Md:['First element synthesized one atom at a time — only 17 atoms were made in its first synthesis.','Named after Dmitri Mendeleev, creator of the periodic table.','Has a half-life of about 52 days for its most stable isotope.'],
+  No:['Named after Alfred Nobel, inventor of dynamite and founder of the Nobel Prizes.','One of the few heavy actinides with a stable +2 oxidation state (unusual for actinides).','Produced only in particle accelerators, in quantities of a few atoms.'],
+  Lr:['The last of the actinide series.','Named after Ernest O. Lawrence, inventor of the cyclotron.','Its chemistry is almost completely unknown due to extreme rarity.'],
+  Rf:['First of the transactinide elements — all are synthetic.','Named after Ernest Rutherford, founder of nuclear physics.','Has a half-life of just ~65 seconds for its most stable isotope.'],
+  Db:['Named after Dubna, Russia, home of the Joint Institute for Nuclear Research.','Its discovery was disputed for years between Soviet and American scientists.','Only produced in particle accelerators a few atoms at a time.'],
+  Sg:['Named after Glenn T. Seaborg, who helped discover 10 elements.','Seaborg was the only person to have an element named after them while still alive.','Half-life of its most stable isotope: ~14 minutes.'],
+  Bh:['Named after Niels Bohr, pioneer of quantum atomic theory.','Produced by bombarding bismuth-209 with chromium-54 ions.','Only a handful of atoms have ever been created.'],
+  Hs:['Named after Hesse, Germany (Hassia in Latin), where it was first synthesized.','Has been detected in quantities of just a few atoms.','Most stable isotope has a half-life of about 16 seconds.'],
+  Mt:['Named after Lise Meitner, who co-discovered nuclear fission.','One of only a few elements named after a woman.','Extremely short half-life — the most stable isotope decays in under 2 minutes.'],
+  Ds:['Named after Darmstadt, Germany, where it was created at the GSI facility.','Produced by bombarding nickel-62 onto lead-208 targets.','First synthesized in 1994; only a few atoms have been created.'],
+  Rg:['Named after Wilhelm Röntgen, discoverer of X-rays.','Predicted to be a solid with unusual properties unlike its lighter congener gold.','Only 3 atoms were detected when it was first synthesized in 1994.'],
+  Cn:['Named after Nicolaus Copernicus.','May behave more like a noble gas than a metal due to relativistic electron effects.','Most stable isotope has a half-life of just ~29 seconds.'],
+  Nh:['Named after Japan (Nihon in Japanese) — first element discovered in Asia.','Synthesized at RIKEN institute by bombarding bismuth-209 with zinc-70.','Half-life of the most stable isotope: ~20 seconds.'],
+  Fl:['Named after the Flerov Laboratory of Nuclear Reactions in Dubna, Russia.','May be a gas at room temperature due to relativistic effects — highly unusual for a "metal."','Most stable isotope lasts less than 2.5 seconds.'],
+  Mc:['Named after the Moscow region, home of the Dubna research center.','Synthesized by bombarding americium-243 with calcium-48.','Only confirmed as a new element in 2015.'],
+  Lv:['Named after Lawrence Livermore National Laboratory in California.','Predicted to be a liquid metal at room temperature.','First synthesized in 2000 — one of the newest elements on the table.'],
+  Ts:['Named after Tennessee, home of Oak Ridge National Lab, Vanderbilt, and UT.','Confirmed as a new element in 2015, officially named in 2016.','Expected to be a solid halogen, though barely any atoms have been made.'],
+  Og:['Named after nuclear physicist Yuri Oganessian.','The heaviest element ever confirmed — atomic number 118.','May actually be a gas at room temperature despite being in the "noble gas" group — relativistic effects make its chemistry unpredictable.'],
+};
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+const inp=document.getElementById('inp');
+const btnDl=document.getElementById('btn-dl');
+const errDiv=document.getElementById('err');
+const infoDiv=document.getElementById('info');
+const hint=document.getElementById('hint');
+
+function generate(){
+  const q=inp.value.trim();
+  if(!q) return;
+  const el=findEl(q);
+  errDiv.style.display='none';
+  if(!el){ errDiv.style.display='block'; infoDiv.style.display='none'; btnDl.style.display='none'; return; }
+  currentEl=el;
+  buildAtom(el);
+
+  const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
+  document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
+  const badge=document.getElementById('i-badge');
+  badge.textContent=CAT_LABEL[el.category]||el.category;
+  badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+
+  const neutrons=Math.round(el.mass)-el.Z;
+  const shellLines=el.shells.map((n,i)=>`Shell ${i+1}: ${n} e⁻`).join('<br>');
+  const facts=FACTS[el.symbol]||[];
+  const fact=facts[Math.floor(Math.random()*facts.length)]||'';
+  document.getElementById('i-det').innerHTML=
+    `Atomic #: ${el.Z}<br>Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>`+
+    `Atomic Mass: ${el.mass} u<br>Electrons: ${el.Z}<br>Shells: ${el.shells.length}`+
+    `<br><br>${shellLines}`+
+    (fact?`<hr style="border-color:rgba(255,255,255,.12);margin:10px 0"><span style="opacity:.7;font-style:italic">💡 ${fact}</span>`:'`);
+
+  infoDiv.style.display='block';
+  btnDl.style.display='';
+  document.getElementById('btn-dl-panel').style.display='block';
+  hint.textContent='Drag to rotate  •  Scroll to zoom  •  Click Download STL to export';
+}
+
+inp.addEventListener('keydown',e=>{ if(e.key==='Enter') generate(); });
+document.getElementById('btn-gen').addEventListener('click',generate);
+btnDl.addEventListener('click',exportSTL);
+document.getElementById('btn-dl-panel').addEventListener('click',exportSTL);
+
+// ── Animation Loop ────────────────────────────────────────────────────────────
+(function animate(){
+  requestAnimationFrame(animate);
+  electronOrbits.forEach(({orbit,speed})=>{ orbit.rotation.z+=speed; });
+  controls.update();
+  renderer.render(scene,camera);
+})();
+
+// Default on load
+setTimeout(()=>{ inp.value='Carbon'; generate(); },200);
+</script>
+</body>
+</html>
