@@ -83,6 +83,23 @@ canvas{display:block}
 .pt-nm{font-size:.4rem;opacity:.65;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90%}
 .btn-rand{background:#b06000;color:#fff}
 .btn-pt{background:rgba(255,255,255,.1);color:#dde;border:1px solid rgba(255,255,255,.2)}
+.btn-quiz{background:#116622;color:#fff}
+.btn-quiz.active{background:#882200}
+/* ── Quiz Panel ── */
+#quiz-panel{display:none;margin-top:10px}
+#quiz-panel hr{border:none;border-top:1px solid rgba(255,255,255,.12);margin:0 0 10px}
+#quiz-inp{width:100%;padding:7px 10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:8px;color:#fff;font-size:.82rem;outline:none;margin-bottom:7px;box-sizing:border-box}
+#quiz-inp:focus{border-color:#5588ff}
+.quiz-btn-row{display:flex;gap:5px;margin-bottom:7px}
+.quiz-btn-row button{flex:1;padding:6px 4px;border:none;border-radius:7px;cursor:pointer;font-size:.76rem;font-weight:500;transition:opacity .15s}
+.quiz-btn-row button:hover{opacity:.82}
+#quiz-check{background:#4466ff;color:#fff}
+#quiz-hint-btn{background:rgba(255,200,50,.18);color:#ffcc33;border:1px solid rgba(255,200,50,.3)!important}
+#quiz-next-btn{background:rgba(255,255,255,.1);color:#dde;border:1px solid rgba(255,255,255,.2)!important}
+#quiz-feedback{font-size:.8rem;min-height:18px;margin-bottom:5px;font-weight:500}
+#quiz-score-disp{font-size:.72rem;opacity:.55;text-align:right}
+#quiz-hints-area{font-size:.78rem;margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
+.quiz-hint-item{background:rgba(255,200,50,.08);border:1px solid rgba(255,200,50,.2);border-radius:6px;padding:5px 8px;color:rgba(255,220,100,.85)}
 /* ── Theme Buttons ── */
 #theme-btns{display:flex;gap:5px;align-items:center}
 .tbtn{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;transition:border-color .15s,transform .1s;flex-shrink:0}
@@ -138,6 +155,7 @@ canvas{display:block}
     <button class="btn btn-gen" id="btn-gen">Generate</button>
     <button class="btn btn-dl" id="btn-dl">⬇ Download STL</button>
     <button class="btn btn-rand" id="btn-rand">🎲 Random</button>
+    <button class="btn btn-quiz" id="btn-quiz">🎯 Quiz</button>
   </div>
   <div id="bond-controls">
     <input id="el1" type="text" placeholder="Element 1 (e.g. H)" />
@@ -162,6 +180,19 @@ canvas{display:block}
     <span id="i-badge" class="badge"></span>
     <img id="i-img" style="width:100%;border-radius:8px;margin:8px 0 4px;display:none;object-fit:cover;max-height:160px" />
     <div id="i-det"></div>
+    <div id="quiz-panel">
+      <hr>
+      <div style="font-size:.72rem;opacity:.45;margin-bottom:8px;text-align:center">📊 Open the Table to browse — click any element to fill your answer</div>
+      <div id="quiz-hints-area"></div>
+      <input id="quiz-inp" type="text" placeholder="Element name or symbol…" autocomplete="off" />
+      <div class="quiz-btn-row">
+        <button id="quiz-check">✓ Check</button>
+        <button id="quiz-hint-btn">💡 Hint</button>
+        <button id="quiz-next-btn">⏭ Next</button>
+      </div>
+      <div id="quiz-feedback"></div>
+      <div id="quiz-score-disp"></div>
+    </div>
     <button id="btn-dl-panel">⬇ Download STL</button>
   </div>
   <div id="bond-info">
@@ -639,31 +670,51 @@ function generate(){
   buildAtom(el);
 
   const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
-  document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
-  const badge=document.getElementById('i-badge');
-  badge.textContent=CAT_LABEL[el.category]||el.category;
-  badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
-
   const neutrons=Math.round(el.mass)-el.Z;
   const shellLines=el.shells.map((n,i)=>`Shell ${i+1}: ${n} e⁻`).join('<br>');
   const facts=FACTS[el.symbol]||[];
-  const factsHTML=facts.length
-    ? `<hr style="border-color:rgba(255,255,255,.12);margin:10px 0">`+
-      facts.map(f=>`<div style="opacity:.7;font-style:italic;margin-bottom:6px">💡 ${f}</div>`).join('')
-    : '';
-  const creatorFav=el.symbol==='Cu'
-    ? `<div style="margin-top:10px;font-weight:bold;color:#f4a460;text-align:center;letter-spacing:.05em">⭐ Creator's Favorite ⭐</div>`
-    : '';
-  document.getElementById('i-det').innerHTML=
-    `Atomic #: ${el.Z}<br>Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>`+
-    `Atomic Mass: ${el.mass} u<br>Electrons: ${el.Z}<br>Shells: ${el.shells.length}`+
-    `<br><br>${shellLines}`+factsHTML+creatorFav;
+
+  if(quizMode){
+    quizEl=el; quizHintsUsed=0; quizSolved=false;
+    document.getElementById('i-name').textContent='??? — ???';
+    const badge=document.getElementById('i-badge');
+    badge.textContent='? ? ?';
+    badge.style.cssText='background:rgba(255,255,255,.05);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.15)';
+    document.getElementById('i-det').innerHTML=
+      `Atomic Mass: ${el.mass} u<br>Shells: ${el.shells.length}<br><br>${shellLines}`;
+    document.getElementById('i-img').style.display='none';
+    document.getElementById('quiz-panel').style.display='block';
+    document.getElementById('quiz-hints-area').innerHTML='';
+    document.getElementById('quiz-feedback').textContent='';
+    document.getElementById('quiz-inp').value='';
+    document.getElementById('quiz-hint-btn').disabled=false;
+    document.getElementById('quiz-hint-btn').textContent='💡 Hint';
+    updateQuizScore();
+    setTimeout(()=>document.getElementById('quiz-inp').focus(),50);
+  } else {
+    const badge=document.getElementById('i-badge');
+    document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
+    badge.textContent=CAT_LABEL[el.category]||el.category;
+    badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+    const factsHTML=facts.length
+      ? `<hr style="border-color:rgba(255,255,255,.12);margin:10px 0">`+
+        facts.map(f=>`<div style="opacity:.7;font-style:italic;margin-bottom:6px">💡 ${f}</div>`).join('')
+      : '';
+    const creatorFav=el.symbol==='Cu'
+      ? `<div style="margin-top:10px;font-weight:bold;color:#f4a460;text-align:center;letter-spacing:.05em">⭐ Creator's Favorite ⭐</div>`
+      : '';
+    document.getElementById('i-det').innerHTML=
+      `Atomic #: ${el.Z}<br>Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>`+
+      `Atomic Mass: ${el.mass} u<br>Electrons: ${el.Z}<br>Shells: ${el.shells.length}`+
+      `<br><br>${shellLines}`+factsHTML+creatorFav;
+    document.getElementById('quiz-panel').style.display='none';
+    fetchWikiImage(el.name, document.getElementById('i-img'));
+  }
 
   infoDiv.style.display='block';
   btnDl.style.display='';
   document.getElementById('btn-dl-panel').style.display='block';
   hint.textContent='Drag to rotate  •  Scroll to zoom  •  Click Download STL to export';
-  fetchWikiImage(el.name, document.getElementById('i-img'));
 }
 
 inp.addEventListener('keydown',e=>{ if(e.key==='Enter') generate(); });
@@ -1469,6 +1520,115 @@ async function aiSendMsg(){
   aiMsgs.scrollTop=aiMsgs.scrollHeight;
 }
 
+// ── Quiz Mode ────────────────────────────────────────────────────────────────
+let quizMode=false, quizEl=null, quizHintsUsed=0, quizSolved=false;
+const quizScore={c:0,t:0};
+
+const QUIZ_HINTS=[
+  el=>`Category: ${CAT_LABEL[el.category]||el.category}`,
+  el=>`Atomic number: ${el.Z} — ${el.Z} protons & electrons`,
+  el=>{ const f=(FACTS[el.symbol]||[])[0]; return f ? `Fact: ${f.replace(new RegExp(el.name,'gi'),'[?]').replace(new RegExp(el.symbol,'g'),'[?]')}` : `Period ${el.shells.length}, Group clue: ${el.shells[el.shells.length-1]} outer electron(s)`; },
+];
+
+function updateQuizScore(){
+  document.getElementById('quiz-score-disp').textContent=
+    quizScore.t>0 ? `Score: ${quizScore.c} / ${quizScore.t} correct` : 'Score: —';
+}
+
+function quizReveal(wasCorrect){
+  quizSolved=true;
+  inp.value=''; // keep searchbar clear
+  const el=quizEl;
+  const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
+  document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
+  const badge=document.getElementById('i-badge');
+  badge.textContent=CAT_LABEL[el.category]||el.category;
+  badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+  fetchWikiImage(el.name, document.getElementById('i-img'));
+  document.getElementById('quiz-hint-btn').disabled=true;
+  document.getElementById('quiz-check').disabled=true;
+  document.getElementById('quiz-inp').disabled=true;
+  const fb=document.getElementById('quiz-feedback');
+  fb.style.color=wasCorrect?'#44ee88':'#ff8866';
+  fb.textContent=wasCorrect?`🎉 Correct! It's ${el.name} (${el.symbol})!`:`Answer: ${el.name} (${el.symbol}, Z=${el.Z})`;
+}
+
+function quizCheck(){
+  if(quizSolved||!quizEl) return;
+  const guess=document.getElementById('quiz-inp').value.trim();
+  if(!guess) return;
+  const el=quizEl;
+  const correct=guess.toLowerCase()===el.name.toLowerCase()||
+                guess.toLowerCase()===el.symbol.toLowerCase()||
+                guess===String(el.Z);
+  if(correct){
+    quizScore.c++; quizScore.t++;
+    quizReveal(true);
+  } else {
+    const fb=document.getElementById('quiz-feedback');
+    fb.style.color='#ff8866';
+    fb.textContent='❌ Not quite — try again or use a hint!';
+    document.getElementById('quiz-inp').select();
+  }
+  updateQuizScore();
+}
+
+function quizHint(){
+  if(!quizEl||quizSolved) return;
+  if(quizHintsUsed>=QUIZ_HINTS.length){
+    quizScore.t++;
+    quizReveal(false);
+    updateQuizScore();
+    return;
+  }
+  const hint=QUIZ_HINTS[quizHintsUsed](quizEl);
+  quizHintsUsed++;
+  const area=document.getElementById('quiz-hints-area');
+  const d=document.createElement('div');
+  d.className='quiz-hint-item';
+  d.textContent=`Hint ${quizHintsUsed}: ${hint}`;
+  area.appendChild(d);
+  if(quizHintsUsed>=QUIZ_HINTS.length){
+    document.getElementById('quiz-hint-btn').textContent='👁 Reveal';
+  }
+}
+
+function quizNext(){
+  if(!quizSolved && quizEl){
+    quizScore.t++;
+    updateQuizScore();
+  }
+  document.getElementById('quiz-check').disabled=false;
+  document.getElementById('quiz-inp').disabled=false;
+  const el=byZ[Math.ceil(Math.random()*118)];
+  inp.value=el.symbol;
+  generate();
+  inp.value=''; // clear after generate so symbol isn't visible
+}
+
+function toggleQuizMode(){
+  quizMode=!quizMode;
+  const btn=document.getElementById('btn-quiz');
+  if(quizMode){
+    btn.textContent='✕ Exit Quiz';
+    btn.classList.add('active');
+    quizScore.c=0; quizScore.t=0;
+    if(appMode!=='atom') document.getElementById('btn-toggle').click();
+    quizNext();
+  } else {
+    btn.textContent='🎯 Quiz';
+    btn.classList.remove('active');
+    document.getElementById('quiz-panel').style.display='none';
+    if(currentEl){ inp.value=currentEl.symbol; generate(); }
+  }
+}
+
+document.getElementById('btn-quiz').addEventListener('click',toggleQuizMode);
+document.getElementById('quiz-check').addEventListener('click',quizCheck);
+document.getElementById('quiz-hint-btn').addEventListener('click',quizHint);
+document.getElementById('quiz-next-btn').addEventListener('click',quizNext);
+document.getElementById('quiz-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') quizCheck(); });
+
 // ── Periodic Table ────────────────────────────────────────────────────────────
 const PT_POS={};
 PT_POS[1]=[1,1]; PT_POS[2]=[1,18];
@@ -1501,10 +1661,15 @@ function buildPeriodicTable(){
     cell.innerHTML=`<span class="pt-z">${Z}</span><span class="pt-sym" style="color:${hex}">${sym}</span><span class="pt-nm">${name}</span>`;
     cell.title=`${name} (${sym}) — Z=${Z}`;
     cell.addEventListener('click',()=>{
-      // Switch to atom mode if needed
-      if(appMode!=='atom'){
-        document.getElementById('btn-toggle').click();
+      if(quizMode){
+        // In quiz mode: fill the answer input instead of loading new element
+        const qi=document.getElementById('quiz-inp');
+        qi.value=name;
+        qi.focus();
+        closePT();
+        return;
       }
+      if(appMode!=='atom') document.getElementById('btn-toggle').click();
       inp.value=sym;
       generate();
       closePT();
@@ -1547,3 +1712,4 @@ aiInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();aiS
 </script>
 </body>
 </html>
+
