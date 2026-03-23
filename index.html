@@ -97,9 +97,40 @@ canvas{display:block}
 #quiz-hint-btn{background:rgba(255,200,50,.18);color:#ffcc33;border:1px solid rgba(255,200,50,.3)!important}
 #quiz-next-btn{background:rgba(255,255,255,.1);color:#dde;border:1px solid rgba(255,255,255,.2)!important}
 #quiz-feedback{font-size:.8rem;min-height:18px;margin-bottom:5px;font-weight:500}
-#quiz-score-disp{font-size:.72rem;opacity:.55;text-align:right}
-#quiz-hints-area{font-size:.78rem;margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
+#quiz-score-disp{font-size:.72rem;opacity:.55;text-align:right;margin-top:2px}
+#quiz-progress{font-size:.74rem;opacity:.6;margin-bottom:6px;text-align:center;letter-spacing:.03em}
+#quiz-hint-area{font-size:.78rem;margin-bottom:6px}
 .quiz-hint-item{background:rgba(255,200,50,.08);border:1px solid rgba(255,200,50,.2);border-radius:6px;padding:5px 8px;color:rgba(255,220,100,.85)}
+/* ── Quiz Setup Modal ── */
+#quiz-modal,#quiz-results{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;z-index:500}
+#quiz-modal.visible,#quiz-results.visible{display:flex}
+.qm-box{background:#0e0e22;border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:28px 32px;width:360px;max-width:92vw;text-align:center}
+.qm-box h2{font-size:1.3rem;margin-bottom:4px}
+.qm-sub{font-size:.78rem;opacity:.45;margin-bottom:22px}
+.qm-label{font-size:.72rem;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:left}
+.qm-row{display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap}
+.qm-btn{flex:1;min-width:70px;padding:9px 6px;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.05);color:#ccd;font-size:.8rem;cursor:pointer;transition:all .15s;font-weight:500}
+.qm-btn:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35)}
+.qm-btn.sel{border-color:#5588ff;background:rgba(85,136,255,.18);color:#88aaff}
+.qm-btn.diff-easy.sel{border-color:#44cc88;background:rgba(68,204,136,.15);color:#66eebb}
+.qm-btn.diff-normal.sel{border-color:#5588ff;background:rgba(85,136,255,.15);color:#88aaff}
+.qm-btn.diff-hard.sel{border-color:#ff8833;background:rgba(255,136,51,.15);color:#ffaa66}
+.qm-btn.diff-nightmare.sel{border-color:#ff4466;background:rgba(255,68,102,.15);color:#ff8899}
+.qm-start{width:100%;padding:12px;background:#4466ff;color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;transition:opacity .15s;margin-top:4px}
+.qm-start:hover{opacity:.85}
+.qm-custom-inp{width:70px;padding:8px 6px;border:1px solid rgba(255,255,255,.18);border-radius:9px;background:rgba(255,255,255,.05);color:#ccd;font-size:.8rem;text-align:center;outline:none}
+.qm-custom-inp:focus{border-color:#5588ff}
+/* ── Quiz Results ── */
+.qr-box{background:#0e0e22;border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:32px;width:320px;max-width:92vw;text-align:center}
+.qr-box h2{font-size:1.4rem;margin-bottom:6px}
+.qr-score{font-size:3rem;font-weight:700;margin:16px 0 4px;line-height:1}
+.qr-label{font-size:.82rem;opacity:.5;margin-bottom:8px}
+.qr-grade{font-size:1.1rem;font-weight:600;margin-bottom:22px}
+.qr-btns{display:flex;gap:8px}
+.qr-btns button{flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font-size:.85rem;font-weight:600;transition:opacity .15s}
+.qr-btns button:hover{opacity:.85}
+#qr-again{background:#4466ff;color:#fff}
+#qr-exit{background:rgba(255,255,255,.1);color:#dde;border:1px solid rgba(255,255,255,.2)}
 /* ── Theme Buttons ── */
 #theme-btns{display:flex;gap:5px;align-items:center}
 .tbtn{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.25);cursor:pointer;transition:border-color .15s,transform .1s;flex-shrink:0}
@@ -182,8 +213,8 @@ canvas{display:block}
     <div id="i-det"></div>
     <div id="quiz-panel">
       <hr>
-      <div style="font-size:.72rem;opacity:.45;margin-bottom:8px;text-align:center">📊 Open the Table to browse — click any element to fill your answer</div>
-      <div id="quiz-hints-area"></div>
+      <div id="quiz-progress"></div>
+      <div id="quiz-hint-area"></div>
       <input id="quiz-inp" type="text" placeholder="Element name or symbol…" autocomplete="off" />
       <div class="quiz-btn-row">
         <button id="quiz-check">✓ Check</button>
@@ -674,42 +705,23 @@ function generate(){
   const shellLines=el.shells.map((n,i)=>`Shell ${i+1}: ${n} e⁻`).join('<br>');
   const facts=FACTS[el.symbol]||[];
 
-  if(quizMode){
-    quizEl=el; quizHintsUsed=0; quizSolved=false;
-    document.getElementById('i-name').textContent='??? — ???';
-    const badge=document.getElementById('i-badge');
-    badge.textContent='? ? ?';
-    badge.style.cssText='background:rgba(255,255,255,.05);color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.15)';
-    document.getElementById('i-det').innerHTML=
-      `Atomic Mass: ${el.mass} u<br>Shells: ${el.shells.length}<br><br>${shellLines}`;
-    document.getElementById('i-img').style.display='none';
-    document.getElementById('quiz-panel').style.display='block';
-    document.getElementById('quiz-hints-area').innerHTML='';
-    document.getElementById('quiz-feedback').textContent='';
-    document.getElementById('quiz-inp').value='';
-    document.getElementById('quiz-hint-btn').disabled=false;
-    document.getElementById('quiz-hint-btn').textContent='💡 Hint';
-    updateQuizScore();
-    setTimeout(()=>document.getElementById('quiz-inp').focus(),50);
-  } else {
-    const badge=document.getElementById('i-badge');
-    document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
-    badge.textContent=CAT_LABEL[el.category]||el.category;
-    badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
-    const factsHTML=facts.length
-      ? `<hr style="border-color:rgba(255,255,255,.12);margin:10px 0">`+
-        facts.map(f=>`<div style="opacity:.7;font-style:italic;margin-bottom:6px">💡 ${f}</div>`).join('')
-      : '';
-    const creatorFav=el.symbol==='Cu'
-      ? `<div style="margin-top:10px;font-weight:bold;color:#f4a460;text-align:center;letter-spacing:.05em">⭐ Creator's Favorite ⭐</div>`
-      : '';
-    document.getElementById('i-det').innerHTML=
-      `Atomic #: ${el.Z}<br>Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>`+
-      `Atomic Mass: ${el.mass} u<br>Electrons: ${el.Z}<br>Shells: ${el.shells.length}`+
-      `<br><br>${shellLines}`+factsHTML+creatorFav;
-    document.getElementById('quiz-panel').style.display='none';
-    fetchWikiImage(el.name, document.getElementById('i-img'));
-  }
+  const badge=document.getElementById('i-badge');
+  document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
+  badge.textContent=CAT_LABEL[el.category]||el.category;
+  badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+  const factsHTML=facts.length
+    ? `<hr style="border-color:rgba(255,255,255,.12);margin:10px 0">`+
+      facts.map(f=>`<div style="opacity:.7;font-style:italic;margin-bottom:6px">💡 ${f}</div>`).join('')
+    : '';
+  const creatorFav=el.symbol==='Cu'
+    ? `<div style="margin-top:10px;font-weight:bold;color:#f4a460;text-align:center;letter-spacing:.05em">⭐ Creator's Favorite ⭐</div>`
+    : '';
+  document.getElementById('i-det').innerHTML=
+    `Atomic #: ${el.Z}<br>Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>`+
+    `Atomic Mass: ${el.mass} u<br>Electrons: ${el.Z}<br>Shells: ${el.shells.length}`+
+    `<br><br>${shellLines}`+factsHTML+creatorFav;
+  document.getElementById('quiz-panel').style.display='none';
+  if(!quizMode) fetchWikiImage(el.name, document.getElementById('i-img'));
 
   infoDiv.style.display='block';
   btnDl.style.display='';
@@ -1521,36 +1533,56 @@ async function aiSendMsg(){
 }
 
 // ── Quiz Mode ────────────────────────────────────────────────────────────────
-let quizMode=false, quizEl=null, quizHintsUsed=0, quizSolved=false;
-const quizScore={c:0,t:0};
+let quizMode=false, quizEl=null, quizHintUsed=false, quizSolved=false;
+let quizDiff='easy', quizTotal=5, quizNum=0, quizCorrect=0;
 
-const QUIZ_HINTS=[
-  el=>`Category: ${CAT_LABEL[el.category]||el.category}`,
-  el=>`Atomic number: ${el.Z} — ${el.Z} protons & electrons`,
-  el=>{ const f=(FACTS[el.symbol]||[])[0]; return f ? `Fact: ${f.replace(new RegExp(el.name,'gi'),'[?]').replace(new RegExp(el.symbol,'g'),'[?]')}` : `Period ${el.shells.length}, Group clue: ${el.shells[el.shells.length-1]} outer electron(s)`; },
-];
+// What each difficulty shows in the info panel
+const QUIZ_DIFF={
+  easy:    {showPE:true,  showMass:true,  showShells:true,  showCat:true,  hint:true,  label:'Easy'},
+  normal:  {showPE:true,  showMass:true,  showShells:true,  showCat:false, hint:true,  label:'Normal'},
+  hard:    {showPE:true,  showMass:false, showShells:false, showCat:false, hint:true,  label:'Hard'},
+  nightmare:{showPE:false,showMass:false, showShells:false, showCat:false, hint:false, label:'⚠ Atomic Nightmare'},
+};
 
-function updateQuizScore(){
-  document.getElementById('quiz-score-disp').textContent=
-    quizScore.t>0 ? `Score: ${quizScore.c} / ${quizScore.t} correct` : 'Score: —';
+function quizFunFact(el){
+  const facts=FACTS[el.symbol]||[];
+  if(!facts.length) return null;
+  return facts[0]
+    .replace(new RegExp(el.name,'gi'),'[???]')
+    .replace(new RegExp(el.symbol,'g'),'[???]');
+}
+
+function updateQuizProgress(){
+  document.getElementById('quiz-progress').textContent=
+    `Question ${quizNum} / ${quizTotal}  •  Score: ${quizCorrect}`;
 }
 
 function quizReveal(wasCorrect){
   quizSolved=true;
-  inp.value=''; // keep searchbar clear
+  inp.value='';
   const el=quizEl;
   const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
   document.getElementById('i-name').textContent=`${el.symbol}  —  ${el.name}`;
   const badge=document.getElementById('i-badge');
   badge.textContent=CAT_LABEL[el.category]||el.category;
   badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
-  fetchWikiImage(el.name, document.getElementById('i-img'));
+  const iimg=document.getElementById('i-img');
+  iimg.style.display='none';
+  fetchWikiImage(el.name, iimg);
   document.getElementById('quiz-hint-btn').disabled=true;
   document.getElementById('quiz-check').disabled=true;
   document.getElementById('quiz-inp').disabled=true;
   const fb=document.getElementById('quiz-feedback');
   fb.style.color=wasCorrect?'#44ee88':'#ff8866';
-  fb.textContent=wasCorrect?`🎉 Correct! It's ${el.name} (${el.symbol})!`:`Answer: ${el.name} (${el.symbol}, Z=${el.Z})`;
+  fb.textContent=wasCorrect
+    ?`🎉 Correct! ${el.name} (${el.symbol})`
+    :`❌ Answer: ${el.name} (${el.symbol}, Z=${el.Z})`;
+  if(wasCorrect) quizCorrect++;
+  updateQuizProgress();
+  // Auto-advance after last question
+  if(quizNum>=quizTotal){
+    setTimeout(showQuizResults, 1400);
+  }
 }
 
 function quizCheck(){
@@ -1558,76 +1590,164 @@ function quizCheck(){
   const guess=document.getElementById('quiz-inp').value.trim();
   if(!guess) return;
   const el=quizEl;
-  const correct=guess.toLowerCase()===el.name.toLowerCase()||
-                guess.toLowerCase()===el.symbol.toLowerCase()||
-                guess===String(el.Z);
-  if(correct){
-    quizScore.c++; quizScore.t++;
+  const ok=guess.toLowerCase()===el.name.toLowerCase()||
+            guess.toLowerCase()===el.symbol.toLowerCase()||
+            guess===String(el.Z);
+  if(ok){
     quizReveal(true);
   } else {
     const fb=document.getElementById('quiz-feedback');
     fb.style.color='#ff8866';
-    fb.textContent='❌ Not quite — try again or use a hint!';
+    fb.textContent='❌ Not quite — try again!';
     document.getElementById('quiz-inp').select();
   }
-  updateQuizScore();
 }
 
 function quizHint(){
-  if(!quizEl||quizSolved) return;
-  if(quizHintsUsed>=QUIZ_HINTS.length){
-    quizScore.t++;
-    quizReveal(false);
-    updateQuizScore();
-    return;
-  }
-  const hint=QUIZ_HINTS[quizHintsUsed](quizEl);
-  quizHintsUsed++;
-  const area=document.getElementById('quiz-hints-area');
+  if(!quizEl||quizSolved||quizHintUsed) return;
+  const fact=quizFunFact(quizEl);
+  if(!fact) return;
+  quizHintUsed=true;
+  const area=document.getElementById('quiz-hint-area');
   const d=document.createElement('div');
   d.className='quiz-hint-item';
-  d.textContent=`Hint ${quizHintsUsed}: ${hint}`;
+  d.textContent=`💡 ${fact}`;
   area.appendChild(d);
-  if(quizHintsUsed>=QUIZ_HINTS.length){
-    document.getElementById('quiz-hint-btn').textContent='👁 Reveal';
+  document.getElementById('quiz-hint-btn').disabled=true;
+}
+
+function quizLoadQuestion(){
+  if(quizNum>=quizTotal){ showQuizResults(); return; }
+  quizSolved=false; quizHintUsed=false; quizNum++;
+  document.getElementById('quiz-check').disabled=false;
+  document.getElementById('quiz-inp').disabled=false;
+  document.getElementById('quiz-hint-area').innerHTML='';
+  document.getElementById('quiz-feedback').textContent='';
+  document.getElementById('quiz-inp').value='';
+
+  const cfg=QUIZ_DIFF[quizDiff];
+  document.getElementById('quiz-hint-btn').disabled=!cfg.hint;
+  document.getElementById('quiz-hint-btn').style.opacity=cfg.hint?'1':'0.3';
+
+  const el=byZ[Math.ceil(Math.random()*118)];
+  quizEl=el;
+  inp.value=el.symbol;
+  generate();
+  inp.value='';
+
+  // Mask the display based on difficulty
+  document.getElementById('i-name').textContent='??? — ???';
+  document.getElementById('i-img').style.display='none';
+  document.getElementById('quiz-panel').style.display='block';
+
+  const badge=document.getElementById('i-badge');
+  if(cfg.showCat){
+    const hex='#'+((COLORS[el.category]||0xffffff).toString(16).padStart(6,'0'));
+    badge.textContent=CAT_LABEL[el.category]||el.category;
+    badge.style.cssText=`background:${hex}22;color:${hex};border:1px solid ${hex}66`;
+  } else {
+    badge.textContent='???';
+    badge.style.cssText='background:rgba(255,255,255,.05);color:rgba(255,255,255,.3);border:1px solid rgba(255,255,255,.12)';
   }
+
+  const neutrons=Math.round(el.mass)-el.Z;
+  const shellLines=el.shells.map((n,i)=>`Shell ${i+1}: ${n} e⁻`).join('<br>');
+  let detHTML='';
+  if(cfg.showPE)    detHTML+=`Protons: ${el.Z}<br>Neutrons: ~${neutrons}<br>Electrons: ${el.Z}<br>`;
+  if(cfg.showMass)  detHTML+=`Atomic Mass: ${el.mass} u<br>`;
+  if(cfg.showShells)detHTML+=`<br>Shells: ${el.shells.length}<br><br>`+shellLines;
+  document.getElementById('i-det').innerHTML=detHTML||'<span style="opacity:.4;font-style:italic">No clues on Atomic Nightmare — good luck.</span>';
+
+  updateQuizProgress();
+  setTimeout(()=>document.getElementById('quiz-inp').focus(),50);
 }
 
 function quizNext(){
   if(!quizSolved && quizEl){
-    quizScore.t++;
-    updateQuizScore();
+    // skipped — reveal then advance
+    quizReveal(false);
+    setTimeout(()=>{
+      if(quizNum<quizTotal) quizLoadQuestion();
+    }, 1200);
+    return;
   }
-  document.getElementById('quiz-check').disabled=false;
-  document.getElementById('quiz-inp').disabled=false;
-  const el=byZ[Math.ceil(Math.random()*118)];
-  inp.value=el.symbol;
-  generate();
-  inp.value=''; // clear after generate so symbol isn't visible
+  if(quizNum<quizTotal) quizLoadQuestion();
 }
 
-function toggleQuizMode(){
-  quizMode=!quizMode;
-  const btn=document.getElementById('btn-quiz');
-  if(quizMode){
-    btn.textContent='✕ Exit Quiz';
-    btn.classList.add('active');
-    quizScore.c=0; quizScore.t=0;
-    if(appMode!=='atom') document.getElementById('btn-toggle').click();
-    quizNext();
-  } else {
-    btn.textContent='🎯 Quiz';
-    btn.classList.remove('active');
-    document.getElementById('quiz-panel').style.display='none';
-    if(currentEl){ inp.value=currentEl.symbol; generate(); }
-  }
+function showQuizResults(){
+  const pct=quizTotal>0?Math.round(quizCorrect/quizTotal*100):0;
+  const grade=pct===100?'🏆 Perfect!':pct>=80?'🥇 Excellent!':pct>=60?'🥈 Good job!':pct>=40?'🥉 Keep practicing!':'💀 Back to chemistry class!';
+  document.getElementById('qr-score-num').textContent=`${quizCorrect}/${quizTotal}`;
+  document.getElementById('qr-score-label').textContent=`${pct}% correct — ${QUIZ_DIFF[quizDiff].label}`;
+  document.getElementById('qr-grade').textContent=grade;
+  document.getElementById('quiz-results').classList.add('visible');
 }
 
-document.getElementById('btn-quiz').addEventListener('click',toggleQuizMode);
+function startQuizSession(){
+  quizNum=0; quizCorrect=0;
+  if(appMode!=='atom') document.getElementById('btn-toggle').click();
+  document.getElementById('quiz-modal').classList.remove('visible');
+  document.getElementById('btn-quiz').textContent='✕ Exit Quiz';
+  document.getElementById('btn-quiz').classList.add('active');
+  quizMode=true;
+  quizLoadQuestion();
+}
+
+function exitQuiz(){
+  quizMode=false;
+  document.getElementById('quiz-modal').classList.remove('visible');
+  document.getElementById('quiz-results').classList.remove('visible');
+  document.getElementById('quiz-panel').style.display='none';
+  document.getElementById('btn-quiz').textContent='🎯 Quiz';
+  document.getElementById('btn-quiz').classList.remove('active');
+  if(currentEl){ inp.value=currentEl.symbol; generate(); }
+}
+
+// ── Quiz Modal UI ─────────────────────────────────────────────────────────────
+document.getElementById('btn-quiz').addEventListener('click',()=>{
+  if(quizMode){ exitQuiz(); return; }
+  document.getElementById('quiz-modal').classList.add('visible');
+});
+
+document.getElementById('qm-diff-row').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-diff]');
+  if(!btn) return;
+  quizDiff=btn.dataset.diff;
+  document.querySelectorAll('#qm-diff-row .qm-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+});
+
+document.getElementById('qm-q-row').addEventListener('click',e=>{
+  const btn=e.target.closest('[data-q]');
+  if(!btn) return;
+  quizTotal=parseInt(btn.dataset.q);
+  document.getElementById('qm-custom').value='';
+  document.querySelectorAll('#qm-q-row .qm-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+});
+
+document.getElementById('qm-custom').addEventListener('input',function(){
+  const v=parseInt(this.value);
+  if(v>0){ quizTotal=v; document.querySelectorAll('#qm-q-row .qm-btn').forEach(b=>b.classList.remove('sel')); }
+});
+
+document.getElementById('qm-start').addEventListener('click',startQuizSession);
+
 document.getElementById('quiz-check').addEventListener('click',quizCheck);
 document.getElementById('quiz-hint-btn').addEventListener('click',quizHint);
 document.getElementById('quiz-next-btn').addEventListener('click',quizNext);
 document.getElementById('quiz-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') quizCheck(); });
+
+document.getElementById('qr-again').addEventListener('click',()=>{
+  document.getElementById('quiz-results').classList.remove('visible');
+  startQuizSession();
+});
+document.getElementById('qr-exit').addEventListener('click',exitQuiz);
+
+// Close modal on backdrop click
+document.getElementById('quiz-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('quiz-modal')) document.getElementById('quiz-modal').classList.remove('visible');
+});
 
 // ── Periodic Table ────────────────────────────────────────────────────────────
 const PT_POS={};
@@ -1710,6 +1830,44 @@ aiSend.addEventListener('click',aiSendMsg);
 aiInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();aiSendMsg();} });
 
 </script>
+
+<!-- Quiz Setup Modal -->
+<div id="quiz-modal">
+  <div class="qm-box">
+    <h2>🎯 Element Quiz</h2>
+    <div class="qm-sub">Test your periodic table knowledge</div>
+    <div class="qm-label">Difficulty</div>
+    <div class="qm-row" id="qm-diff-row">
+      <button class="qm-btn diff-easy sel" data-diff="easy">Easy</button>
+      <button class="qm-btn diff-normal" data-diff="normal">Normal</button>
+      <button class="qm-btn diff-hard" data-diff="hard">Hard</button>
+      <button class="qm-btn diff-nightmare" data-diff="nightmare">⚠ Atomic Nightmare</button>
+    </div>
+    <div class="qm-label">Questions</div>
+    <div class="qm-row" id="qm-q-row">
+      <button class="qm-btn sel" data-q="5">5</button>
+      <button class="qm-btn" data-q="10">10</button>
+      <button class="qm-btn" data-q="15">15</button>
+      <button class="qm-btn" data-q="20">20</button>
+      <input class="qm-custom-inp" id="qm-custom" type="number" min="1" max="118" placeholder="?" />
+    </div>
+    <button class="qm-start" id="qm-start">Start Quiz</button>
+  </div>
+</div>
+
+<!-- Quiz Results Modal -->
+<div id="quiz-results">
+  <div class="qr-box">
+    <h2>Quiz Complete!</h2>
+    <div class="qr-score" id="qr-score-num"></div>
+    <div class="qr-label" id="qr-score-label"></div>
+    <div class="qr-grade" id="qr-grade"></div>
+    <div class="qr-btns">
+      <button id="qr-again">🔁 Play Again</button>
+      <button id="qr-exit">✕ Exit</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
