@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Atom 3D Generator</title>
+<title>Atom3D</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -184,7 +184,7 @@ canvas{display:block}
 </head>
 <body>
 <header>
-  <h1 id="app-title">⚛ Atom 3D Generator</h1>
+  <h1 id="app-title">⚛ Atom3D</h1>
   <div id="atom-controls" class="controls">
     <input id="inp" type="text" placeholder="Element name, symbol, or atomic number…" />
     <button class="btn btn-gen" id="btn-gen">Generate</button>
@@ -744,7 +744,12 @@ const CPK_SIZE={H:.5,C:.65,N:.63,O:.62,F:.55,Cl:.82,Br:.9,S:.78,P:.78,Na:.98,K:1
 
 // ── Compound Database ─────────────────────────────────────────────────────────
 const COMPOUNDS={};
-const dc=(k,d)=>{COMPOUNDS[k]=d;};
+const dc=(k,d)=>{
+  const cnt={};
+  d.atoms.forEach(a=>{cnt[a.el]=(cnt[a.el]||0)+1;});
+  const key=Object.keys(cnt).sort().map(el=>`${el}${cnt[el]}`).join('+');
+  COMPOUNDS[key]=d;
+};
 // ─ 2-element ─
 dc('H+O',{name:'Water',formula:'H₂O',bondType:'Polar Covalent',shape:'Bent',angle:'104.5°',desc:'The most essential molecule for life. Its polarity lets it dissolve almost anything — earning it the nickname "universal solvent." Your body is ~60% water.',atoms:[{el:'O',p:[0,0,0]},{el:'H',p:[1.8,-1.2,0]},{el:'H',p:[-1.8,-1.2,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1}]});
 dc('H+N',{name:'Ammonia',formula:'NH₃',bondType:'Polar Covalent',shape:'Trigonal Pyramidal',angle:'107°',desc:'A pungent colorless gas critical to agriculture — the Haber process converts N₂ to NH₃ to make fertilizers, which feed roughly half the world\'s population.',atoms:[{el:'N',p:[0,.5,0]},{el:'H',p:[2,-.8,1.2]},{el:'H',p:[-2,-.8,1.2]},{el:'H',p:[0,-.8,-2.2]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1}]});
@@ -776,11 +781,48 @@ dc('H+K+O',{name:'Potassium Hydroxide',formula:'KOH',bondType:'Ionic + Covalent'
 dc('C+Ca+O',{name:'Calcium Carbonate',formula:'CaCO₃',bondType:'Ionic + Covalent',shape:'Trigonal (CO₃²⁻) + Ionic',angle:'120° (CO₃)',desc:'Makes up limestone, marble, chalk, and seashells. The White Cliffs of Dover are CaCO₃. Antacid tablets (Tums) are compressed calcium carbonate. Coral reefs are built from it.',atoms:[{el:'Ca',p:[-4,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.5,0,0]},{el:'O',p:[-1.2,2.3,0]},{el:'O',p:[-1.2,-2.3,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
 dc('Cl+H+O',{name:'Hypochlorous Acid',formula:'HClO',bondType:'Polar Covalent',shape:'Bent',angle:'103°',desc:'The active disinfectant in chlorine bleach. Remarkably, your own white blood cells produce HClO to kill bacteria during infection — it\'s your body\'s built-in bleach.',atoms:[{el:'H',p:[-3.2,0,0]},{el:'O',p:[-.8,0,0]},{el:'Cl',p:[2.3,0,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1}]});
 dc('Cl+H+N',{name:'Ammonium Chloride',formula:'NH₄Cl',bondType:'Ionic + Covalent',shape:'Tetrahedral (NH₄⁺) + Ionic',angle:'109.5°',desc:'Creates dense white smoke when NH₃ and HCl vapors meet. Used as soldering flux, in cough medicine, as a food additive, and to add a salty-bitter flavor to Scandinavian "salty liquorice."',atoms:[{el:'N',p:[0,0,0]},{el:'H',p:[1.7,1.7,1.7]},{el:'H',p:[-1.7,-1.7,1.7]},{el:'H',p:[-1.7,1.7,-1.7]},{el:'H',p:[1.7,-1.7,-1.7]},{el:'Cl',p:[5,0,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:0,b:5,o:1}]});
+// ─ monoxides ─
+dc('CO',{name:'Carbon Monoxide',formula:'CO',bondType:'Nonpolar Covalent (triple bond)',shape:'Linear',angle:'180°',desc:'A silent, odorless killer — binds to hemoglobin 250× more strongly than oxygen, suffocating cells. Also the key intermediate in steelmaking and a feedstock for making methanol and fuels.',atoms:[{el:'C',p:[-1.5,0,0]},{el:'O',p:[1.5,0,0]}],bonds:[{a:0,b:1,o:3}]});
+dc('NO',{name:'Nitric Oxide',formula:'NO',bondType:'Polar Covalent',shape:'Linear',angle:'180°',desc:'A radical gas and vital signaling molecule in the body — dilates blood vessels, regulates blood pressure, and helps neurons communicate. The basis of how Viagra works. Also a major component of smog.',atoms:[{el:'N',p:[-1.5,0,0]},{el:'O',p:[1.5,0,0]}],bonds:[{a:0,b:1,o:2}]});
+dc('N2O',{name:'Nitrous Oxide (Laughing Gas)',formula:'N₂O',bondType:'Polar Covalent',shape:'Linear',angle:'180°',desc:'The original anesthetic — first used in dentistry in 1844. Also used to boost engine power in racing cars (nitrous kits). Surprisingly, it\'s a potent greenhouse gas 265× more warming than CO₂ over a century.',atoms:[{el:'N',p:[-2.5,0,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2.5,0,0]}],bonds:[{a:0,b:1,o:2},{a:1,b:2,o:2}]});
+dc('FeO',{name:'Iron(II) Oxide',formula:'FeO',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'The black iron oxide — different from the red rust (Fe₂O₃). Forms on hot steel surfaces and gives cast iron its dark color. Used as a pigment in cosmetics and as a polishing compound for glass.',atoms:[{el:'Fe',p:[-2.2,0,0]},{el:'O',p:[2.2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('MnO',{name:'Manganese(II) Oxide',formula:'MnO',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'A green powder used to decolorize glass — manganese neutralizes the green tint from iron impurities. Also used in fertilizers and as a catalyst. One of the key minerals in deep-sea manganese nodules.',atoms:[{el:'Mn',p:[-2.2,0,0]},{el:'O',p:[2.2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('NiO',{name:'Nickel(II) Oxide',formula:'NiO',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'A green-black powder used to make nickel-cadmium batteries and as a pigment in ceramics and glass. One of the most studied transition metal oxides due to its unusual magnetic and electronic properties.',atoms:[{el:'Ni',p:[-2.2,0,0]},{el:'O',p:[2.2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+// ─ bonus: hydrogen peroxide ─
+dc('H2O2',{name:'Hydrogen Peroxide',formula:'H₂O₂',bondType:'Polar Covalent',shape:'Bent (O-O single bond)',angle:'111°',desc:'Same elements as water but wildly different chemistry. Pure H₂O₂ is explosive — rockets use it as propellant. The 3% version in your medicine cabinet bleaches hair and kills bacteria by releasing reactive oxygen.',atoms:[{el:'O',p:[-1.2,0,0]},{el:'O',p:[1.2,0,0]},{el:'H',p:[-2.2,1.5,0]},{el:'H',p:[2.2,1.5,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:1,b:3,o:1}]});
+// ─ additional 2-element ─
+dc('F+Na',{name:'Sodium Fluoride',formula:'NaF',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'Added to drinking water and toothpaste to prevent tooth decay. One of the earliest and most effective public health interventions. Highly toxic in large doses — the lethal dose is only about 5 g.',atoms:[{el:'Na',p:[-2.2,0,0]},{el:'F',p:[2.2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('O+Zn',{name:'Zinc Oxide',formula:'ZnO',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'The white stuff lifeguards put on their noses. Blocks both UVA and UVB radiation making it one of the best sunscreens. Also used in calamine lotion, diaper rash cream, and as a semiconductor in electronics.',atoms:[{el:'Zn',p:[-2.2,0,0]},{el:'O',p:[2.2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('O+Ti',{name:'Titanium Dioxide',formula:'TiO₂',bondType:'Ionic/Covalent',shape:'Linear (simplified)',angle:'180°',desc:'The whitest pigment known — used in white paint, paper, and sunscreen. So reflective it is used to calibrate scientific instruments. Also the active ingredient in self-cleaning glass.',atoms:[{el:'O',p:[-2.8,0,0]},{el:'Ti',p:[0,0,0]},{el:'O',p:[2.8,0,0]}],bonds:[{a:0,b:1,o:2},{a:1,b:2,o:2}]});
+dc('Ag+Cl',{name:'Silver Chloride',formula:'AgCl',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'Turns dark in sunlight — the basis of all traditional photographic film. Silver ions are reduced to metallic silver by light, creating a latent image. Still used in photochromic lenses that darken outdoors.',atoms:[{el:'Ag',p:[-2.5,0,0]},{el:'Cl',p:[2.5,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('Fe+S',{name:'Pyrite (Fool\'s Gold)',formula:'FeS₂',bondType:'Covalent + Ionic',shape:'Cubic (unit cell)',angle:'—',desc:'Looks so much like gold it fooled countless miners during gold rushes — hence "Fool\'s Gold." Produces sparks when struck, making it the original lighter flint. Now used in lithium batteries and solar cells.',atoms:[{el:'Fe',p:[0,0,0]},{el:'S',p:[2.4,0,0]},{el:'S',p:[-2.4,0,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1}]});
+dc('H+I',{name:'Hydroiodic Acid',formula:'HI',bondType:'Polar Covalent',shape:'Linear',angle:'180°',desc:'One of the strongest hydrohalic acids. Used in organic chemistry and pharmaceutical synthesis. A precursor to iodine compounds essential in thyroid medicine. Heavily regulated due to misuse potential.',atoms:[{el:'H',p:[-2.3,0,0]},{el:'I',p:[2.3,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('C+S',{name:'Carbon Disulfide',formula:'CS₂',bondType:'Nonpolar Covalent',shape:'Linear',angle:'180°',desc:'An extremely flammable, sweet-smelling liquid. Its vapors ignite so easily they can be set alight by a steam pipe. Used as a solvent for rubber and phosphorus, and once used as a grain fumigant.',atoms:[{el:'S',p:[-3,0,0]},{el:'C',p:[0,0,0]},{el:'S',p:[3,0,0]}],bonds:[{a:0,b:1,o:2},{a:1,b:2,o:2}]});
+dc('H+P',{name:'Phosphine',formula:'PH₃',bondType:'Polar Covalent',shape:'Trigonal Pyramidal',angle:'93.5°',desc:'A colorless, toxic gas smelling of rotting fish. Detected in Venus\'s atmosphere in 2020, sparking debate about possible microbial life. On Earth it seeps from swamps and is used as a grain fumigant.',atoms:[{el:'P',p:[0,.5,0]},{el:'H',p:[2,-.8,1.2]},{el:'H',p:[-2,-.8,1.2]},{el:'H',p:[0,-.8,-2.2]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1}]});
+dc('Cl+Fe',{name:'Iron(III) Chloride',formula:'FeCl₃',bondType:'Ionic/Covalent',shape:'Trigonal Planar',angle:'120°',desc:'A dark brown solid used to etch copper circuit boards — it dissolves copper precisely, leaving clean circuit traces. Also used in water treatment. Reacts with water so vigorously the anhydrous form fumes in air.',atoms:[{el:'Fe',p:[0,0,0]},{el:'Cl',p:[2.5,0,0]},{el:'Cl',p:[-1.25,2.17,0]},{el:'Cl',p:[-1.25,-2.17,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1}]});
+dc('F+Li',{name:'Lithium Fluoride',formula:'LiF',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'Has the highest melting point of all alkali halides. Used in specialized optics for UV and infrared light because it transmits wavelengths that glass cannot. Also used as a flux in nuclear reactors.',atoms:[{el:'Li',p:[-2,0,0]},{el:'F',p:[2,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('O+Pb',{name:'Lead(II) Oxide',formula:'PbO',bondType:'Ionic',shape:'Linear (unit cell)',angle:'—',desc:'Used in lead-acid car batteries and to make crystal glass sparkle by increasing its refractive index. Ancient Egyptians used lead oxide as kohl eyeliner — completely unaware of its toxicity.',atoms:[{el:'Pb',p:[-2.4,0,0]},{el:'O',p:[2.4,0,0]}],bonds:[{a:0,b:1,o:1}]});
+dc('Hg+S',{name:'Cinnabar',formula:'HgS',bondType:'Covalent',shape:'Linear (unit cell)',angle:'—',desc:'The brilliant scarlet pigment used by Roman, Maya, and Chinese civilizations for thousands of years. The primary ore of mercury — extracted by roasting. The vermilion in Renaissance masterpieces is HgS, now known to be highly toxic.',atoms:[{el:'Hg',p:[-2.4,0,0]},{el:'S',p:[2.4,0,0]}],bonds:[{a:0,b:1,o:1}]});
+// ─ additional 3-element ─
+dc('C+Cl+H',{name:'Chloroform',formula:'CHCl₃',bondType:'Polar Covalent',shape:'Tetrahedral',angle:'109.5°',desc:'The first general anesthetic used in surgery (1847). Its sweet smell and sedating effect made it famous — and infamous in crime fiction. Now replaced by safer anesthetics but still used as a lab solvent.',atoms:[{el:'C',p:[0,0,0]},{el:'H',p:[0,2,0]},{el:'Cl',p:[1.9,-.8,1.5]},{el:'Cl',p:[-1.9,-.8,1.5]},{el:'Cl',p:[0,-.8,-2.5]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1}]});
+dc('C+Na+O',{name:'Sodium Carbonate',formula:'Na₂CO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Known as washing soda or soda ash. One of the most produced industrial chemicals — used in glass, soap, and paper making. Ancient Egyptians used naturally occurring sodium carbonate (natron) to mummify bodies.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]},{el:'Na',p:[3.8,0,0]},{el:'Na',p:[-3,2.5,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:1,b:4,o:1},{a:2,b:5,o:1}]});
+dc('Al+H+O',{name:'Aluminium Hydroxide',formula:'Al(OH)₃',bondType:'Ionic + Covalent',shape:'Trigonal',angle:'—',desc:'The active ingredient in most antacid tablets — neutralizes stomach acid safely. Also a flame retardant: it releases water when heated, cooling the surrounding material. Dissolves in both acids and bases (amphoteric).',atoms:[{el:'Al',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]},{el:'O',p:[0,2.5,0]},{el:'H',p:[0,3.8,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1}]});
+dc('H+Mg+O',{name:'Magnesium Hydroxide',formula:'Mg(OH)₂',bondType:'Ionic + Covalent',shape:'Angular',angle:'—',desc:'Sold as Milk of Magnesia — a white suspension used as an antacid and gentle laxative. Also used in wastewater treatment to neutralize acidic industrial waste. Safe enough for daily use.',atoms:[{el:'Mg',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1}]});
+dc('C+N+Na',{name:'Sodium Cyanide',formula:'NaCN',bondType:'Ionic + Covalent',shape:'Linear',angle:'180°',desc:'Extremely toxic — blocks cells from using oxygen, killing within minutes. Used in gold mining to leach gold from ore, and in electroplating. One of the most tightly regulated industrial chemicals on Earth.',atoms:[{el:'Na',p:[-3.5,0,0]},{el:'C',p:[0,0,0]},{el:'N',p:[2.8,0,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:3}]});
+dc('C+K+O',{name:'Potassium Carbonate',formula:'K₂CO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Known as potash — one of the earliest industrial chemicals, made by leaching wood ash with water. Used to make soap, glass, and gunpowder for centuries. Potassium gets its symbol K from "kalium," derived from potash.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]},{el:'K',p:[3.8,0,0]},{el:'K',p:[-3.2,2.5,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:1,b:4,o:1},{a:2,b:5,o:1}]});
 
-function findCompound(inputs){
-  const syms=[...new Set(inputs.filter(Boolean).map(v=>findEl(v)).filter(Boolean).map(e=>e.symbol))];
+function findCompound(inputs, userCounts){
+  const inputMap={};
+  inputs.forEach((v,i)=>{
+    if(!v) return;
+    const e=findEl(v);
+    if(!e) return;
+    inputMap[e.symbol]=userCounts[i]||1;
+  });
+  const syms=Object.keys(inputMap);
   if(syms.length<2) return null;
-  return COMPOUNDS[syms.sort().join('+')]||null;
+  const key=syms.sort().map(sym=>`${sym}${inputMap[sym]}`).join('+');
+  return COMPOUNDS[key]||null;
 }
 
 // ── Bond Cylinder Helpers ─────────────────────────────────────────────────────
@@ -863,7 +905,7 @@ function combineBond(){
   bondErr.style.display='none';
   document.getElementById('bond-info').style.display='none';
   if(!v1||!v2){bondErr.innerHTML='Please enter at least 2 elements.';bondErr.style.display='block';return;}
-  const compound=findCompound([v1,v2,v3]);
+  const compound=findCompound([v1,v2,v3],[c1,c2,c3]);
   if(!compound){
     const parts=[[v1,c1],[v2,c2],...(v3?[[v3,c3]]:[])];
     const label=parts.map(([v,n])=>{const e=findEl(v);const sym=e?e.symbol:v.toUpperCase();return n>1?`${sym}${n}`:sym;}).join(' + ');
@@ -893,7 +935,7 @@ document.getElementById('btn-toggle').addEventListener('click',()=>{
   document.getElementById('btn-dl-panel').style.display='none';
   document.getElementById('err').style.display='none';
   bondErr.style.display='none';
-  document.getElementById('app-title').textContent=isAtom?'⚛ Atom 3D Generator':'🔗 Bond Builder';
+  document.getElementById('app-title').textContent=isAtom?'⚛ Atom3D':'🔗 Bond Builder';
   document.getElementById('btn-toggle').textContent=isAtom?'🔗 Bond Builder':'⚛ Atom Viewer';
   document.getElementById('hint').textContent=isAtom?'Enter an element above to begin':'Enter 2–3 elements to see how they bond';
   if(atomGroup){scene.remove(atomGroup);atomGroup=null;electronOrbits=[];}
