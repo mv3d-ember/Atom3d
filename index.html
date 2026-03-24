@@ -180,6 +180,79 @@ canvas{display:block}
 [data-theme="purple"] #pt-wrap{background:#120028;border-color:rgba(150,70,255,.22)}
 [data-theme="purple"] #ai-clear{color:rgba(190,140,255,.4)}
 [data-theme="purple"] #ai-x{color:rgba(190,140,255,.45)}
+/* ── Mobile Layout ── */
+#mobile-nav{display:none}
+@media(max-width:640px){
+  body{overflow:hidden}
+  header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
+  h1{font-size:.95rem;white-space:nowrap;flex-shrink:0}
+  #btn-toggle,#btn-pt,.btn-dl,.btn-rand,.btn-quiz,#theme-btns{display:none!important}
+  .controls{gap:5px;flex:1;min-width:0}
+  #atom-controls input,#bond-controls input{font-size:16px}
+  #atom-controls input{max-width:100%}
+  .btn{padding:8px 12px;font-size:.82rem}
+  #bond-controls{flex-wrap:wrap;gap:5px}
+  #bond-controls input:not(.cnt-inp){flex:1;min-width:70px;max-width:none}
+  .cnt-inp{width:38px!important;max-width:38px!important;flex:0 0 38px!important}
+  #wrap{padding-bottom:56px}
+  #hint{bottom:68px;font-size:.7rem}
+  #err,#bond-err{top:38%}
+  /* Info panels → slide-up bottom sheets */
+  #info,#bond-info{
+    position:fixed!important;
+    bottom:56px!important;left:0!important;right:0!important;top:auto!important;
+    max-width:100%!important;min-width:unset!important;width:100%!important;
+    max-height:62vh!important;
+    border-radius:18px 18px 0 0!important;
+    border-left:none!important;border-right:none!important;border-bottom:none!important;
+    transform:translateY(100%);
+    transition:transform .3s cubic-bezier(.4,0,.2,1);
+    z-index:90;padding-top:6px!important
+  }
+  #info.sheet-up,#bond-info.sheet-up{transform:translateY(0)}
+  .sheet-handle{width:38px;height:4px;background:rgba(255,255,255,.22);border-radius:2px;margin:0 auto 10px;cursor:pointer}
+  /* AI chat → full width */
+  #ai-fab{bottom:68px!important;right:14px!important;width:46px!important;height:46px!important;font-size:1.2rem!important}
+  #ai-popup{
+    left:0!important;right:0!important;bottom:56px!important;
+    width:100%!important;height:calc(100vh - 56px - 54px)!important;
+    border-radius:14px 14px 0 0!important;
+    border-left:none!important;border-right:none!important;border-bottom:none!important
+  }
+  /* Bottom nav */
+  #mobile-nav{
+    display:flex!important;position:fixed;bottom:0;left:0;right:0;height:56px;
+    background:rgba(6,6,19,.97);border-top:1px solid rgba(255,255,255,.1);
+    z-index:150;align-items:center;justify-content:space-around;
+    padding:0 4px;backdrop-filter:blur(10px)
+  }
+  .mnav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;padding:4px 2px;border:none;background:none;color:rgba(255,255,255,.38);
+    cursor:pointer;border-radius:8px;min-height:44px;transition:color .15s
+  }
+  .mnav-btn .m-icon{font-size:1.2rem;line-height:1}
+  .mnav-btn .m-label{font-size:.52rem;letter-spacing:.03em;font-weight:500}
+  .mnav-btn.mob-active{color:#5588ff}
+  .mnav-btn.mob-quiz-active{color:#44cc88}
+  /* Periodic table */
+  #pt-modal{padding:6px;align-items:flex-start;padding-top:16px;overflow:auto}
+  #pt-wrap{padding:10px;overflow-x:auto}
+  #pt-grid{grid-template-columns:repeat(18,32px)!important;grid-template-rows:repeat(7,32px) 7px repeat(2,32px)!important;gap:2px!important}
+  .pt-sym{font-size:.68rem!important}.pt-z{font-size:.34rem!important}.pt-nm{display:none!important}
+  .pt-cell{border-radius:3px!important}.pt-cell:hover{transform:scale(1.12)!important}
+  /* Quiz modal */
+  .qm-box{padding:22px 18px}.qr-box{padding:24px 18px}
+  /* Touch targets */
+  .btn,button{min-height:40px}
+  /* Theme overrides for mobile nav */
+  [data-theme="light"] #mobile-nav{background:rgba(230,234,248,.97);border-top-color:rgba(0,0,0,.1)}
+  [data-theme="light"] .mnav-btn{color:rgba(0,0,0,.35)}
+  [data-theme="light"] .mnav-btn.mob-active{color:#3355dd}
+  [data-theme="purple"] #mobile-nav{background:rgba(13,0,34,.97);border-top-color:rgba(150,70,255,.2)}
+  [data-theme="purple"] .mnav-btn{color:rgba(190,140,255,.38)}
+  [data-theme="purple"] .mnav-btn.mob-active{color:#bb55ff}
+}
 </style>
 </head>
 <body>
@@ -209,8 +282,26 @@ canvas{display:block}
   <button class="btn btn-pt" id="btn-pt">📊 Table</button>
   <button class="btn btn-toggle" id="btn-toggle">🔗 Bond Builder</button>
 </header>
+<div id="mobile-nav">
+  <button class="mnav-btn mob-active" id="mnav-atom">
+    <span class="m-icon">⚛</span><span class="m-label">Atom</span>
+  </button>
+  <button class="mnav-btn" id="mnav-bond">
+    <span class="m-icon">🔗</span><span class="m-label">Bond</span>
+  </button>
+  <button class="mnav-btn" id="mnav-table">
+    <span class="m-icon">📊</span><span class="m-label">Table</span>
+  </button>
+  <button class="mnav-btn" id="mnav-quiz">
+    <span class="m-icon">🎯</span><span class="m-label">Quiz</span>
+  </button>
+  <button class="mnav-btn" id="mnav-chat">
+    <span class="m-icon">🤖</span><span class="m-label">Chat</span>
+  </button>
+</div>
 <div id="wrap">
   <div id="info">
+    <div class="sheet-handle" id="info-handle"></div>
     <h2 id="i-name"></h2>
     <span id="i-badge" class="badge"></span>
     <img id="i-img" style="width:100%;border-radius:8px;margin:8px 0 4px;display:none;object-fit:cover;max-height:160px" />
@@ -231,6 +322,7 @@ canvas{display:block}
     <button id="btn-dl-panel">⬇ Download STL</button>
   </div>
   <div id="bond-info">
+    <div class="sheet-handle" id="bond-handle"></div>
     <h2 id="b-name"></h2>
     <span id="b-badge" class="badge"></span>
     <img id="b-img" style="width:100%;border-radius:8px;margin:8px 0 4px;display:none;object-fit:cover;max-height:160px" />
@@ -1874,6 +1966,87 @@ aiX.addEventListener('click',()=>{ aiPopup.classList.remove('visible'); aiFab.cl
 aiClear.addEventListener('click',()=>{ aiMsgs.innerHTML=''; aiAddMsg('a','Chat cleared! My memory is still intact — say "forget everything" to wipe it. ⚛'); });
 aiSend.addEventListener('click',aiSendMsg);
 aiInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();aiSendMsg();} });
+
+// ── Mobile Nav ──────────────────────────────────────────────────────────────
+const isMobile=()=>window.innerWidth<=640;
+
+function mobileSheetUp(panel){
+  if(!isMobile()) return;
+  document.getElementById('info').classList.remove('sheet-up');
+  document.getElementById('bond-info').classList.remove('sheet-up');
+  if(panel) panel.classList.add('sheet-up');
+}
+
+function mobileSheetDown(panel){
+  if(panel) panel.classList.remove('sheet-up');
+}
+
+function setMobNav(activeId){
+  document.querySelectorAll('.mnav-btn').forEach(b=>{
+    b.classList.remove('mob-active','mob-quiz-active');
+  });
+  const el=document.getElementById(activeId);
+  if(el) el.classList.add(activeId==='mnav-quiz'?'mob-quiz-active':'mob-active');
+}
+
+// Patch generate() to auto-show sheet on mobile
+const _origGenerate=generate;
+generate=function(){
+  _origGenerate.apply(this,arguments);
+  if(isMobile()){
+    mobileSheetUp(document.getElementById('info'));
+    setMobNav('mnav-atom');
+  }
+};
+
+// Patch updateBondInfo to auto-show bond sheet on mobile
+const _bondInfoEl=document.getElementById('bond-info');
+const _origSetBondVisible=()=>{};
+const _bondObserver=new MutationObserver(()=>{
+  if(isMobile() && _bondInfoEl.style.display!=='none'){
+    mobileSheetUp(_bondInfoEl);
+  }
+});
+_bondObserver.observe(_bondInfoEl,{attributes:true,attributeFilter:['style']});
+
+// Drag handle to close sheets
+['info-handle','bond-handle'].forEach(id=>{
+  const h=document.getElementById(id);
+  if(h) h.addEventListener('click',()=>{
+    mobileSheetDown(h.closest('#info,#bond-info'));
+  });
+});
+
+// Mobile nav button wiring
+document.getElementById('mnav-atom').addEventListener('click',()=>{
+  if(appMode!=='atom') document.getElementById('btn-toggle').click();
+  setMobNav('mnav-atom');
+  const info=document.getElementById('info');
+  if(info.style.display!=='none') mobileSheetUp(info);
+});
+
+document.getElementById('mnav-bond').addEventListener('click',()=>{
+  if(appMode==='atom') document.getElementById('btn-toggle').click();
+  setMobNav('mnav-bond');
+  const bi=document.getElementById('bond-info');
+  if(bi.style.display!=='none') mobileSheetUp(bi);
+});
+
+document.getElementById('mnav-table').addEventListener('click',()=>{
+  document.getElementById('btn-pt').click();
+  setMobNav('mnav-table');
+});
+
+document.getElementById('mnav-quiz').addEventListener('click',()=>{
+  document.getElementById('btn-quiz').click();
+  setMobNav(quizMode?'mnav-atom':'mnav-quiz');
+});
+
+document.getElementById('mnav-chat').addEventListener('click',()=>{
+  aiFab.click();
+  const isOpen=aiPopup.classList.contains('visible');
+  document.getElementById('mnav-chat').classList.toggle('mob-active',isOpen);
+});
 
 </script>
 
