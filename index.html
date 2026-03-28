@@ -33,13 +33,37 @@ canvas{display:block}
 #err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,50,50,.12);border:1px solid rgba(255,80,80,.4);padding:16px 28px;border-radius:10px;color:#ffaaaa;display:none;text-align:center}
 .btn-toggle{background:rgba(255,255,255,.1);color:#dde;border:1px solid rgba(255,255,255,.2);margin-left:auto;white-space:nowrap}
 .btn-toggle:hover{background:rgba(255,255,255,.2)!important;opacity:1!important}
-#bond-controls{display:none;gap:8px;flex:1}
-#bond-controls input{max-width:160px}
+#bond-controls{display:none;gap:6px;flex:1;align-items:flex-start}
+.bond-search-group{position:relative;display:flex;gap:5px;align-items:center}
+.bond-search-group input[type="text"]{width:148px;font-size:.88rem}
+.bond-results{position:absolute;top:100%;left:0;background:#0e0e24;border:1px solid rgba(255,255,255,.18);border-radius:8px;z-index:200;min-width:148px;max-height:180px;overflow-y:auto;display:none;margin-top:3px;box-shadow:0 6px 20px rgba(0,0,0,.6)}
+.bond-results.open{display:block}
+.bond-result-item{padding:6px 11px;cursor:pointer;font-size:.82rem;color:#dde;transition:background .1s}
+.bond-result-item:hover{background:rgba(85,136,255,.22);color:#fff}
 .cnt-inp{width:46px!important;max-width:46px!important;flex:0 0 46px!important;text-align:center;padding:8px 6px;-moz-appearance:textfield}
 .cnt-inp::-webkit-outer-spin-button,.cnt-inp::-webkit-inner-spin-button{-webkit-appearance:none}
 #bond-info{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);padding:14px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.12);font-size:.82rem;line-height:1.9;min-width:180px;max-width:240px;max-height:calc(100vh - 100px);overflow-y:auto;display:none}
 #bond-info h2{font-size:1.1rem;margin-bottom:4px}
+#btn-dl-bond{display:none;width:100%;margin-top:12px;padding:9px;background:#22aa66;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.88rem;font-weight:600;letter-spacing:.3px;transition:opacity .15s}
+#btn-dl-bond:hover{opacity:.85}
 #bond-err{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(255,120,50,.1);border:1px solid rgba(255,120,50,.4);padding:16px 28px;border-radius:10px;color:#ffcc99;display:none;text-align:center;max-width:320px}
+/* ── Combos Popup ── */
+#combos-fab{position:fixed;bottom:22px;left:22px;padding:10px 15px;border-radius:50px;background:linear-gradient(135deg,#226633,#114422);border:1px solid rgba(100,255,150,.25);cursor:pointer;font-size:.85rem;color:#88ffaa;display:none;align-items:center;gap:7px;box-shadow:0 4px 18px rgba(0,100,50,.45);z-index:200;transition:transform .2s,box-shadow .2s;white-space:nowrap}
+#combos-fab:hover{transform:scale(1.06);box-shadow:0 6px 26px rgba(0,140,70,.55)}
+#combos-popup{position:fixed;bottom:74px;left:22px;width:290px;height:420px;background:#0c0c1e;border:1px solid rgba(255,255,255,.14);border-radius:16px;display:none;flex-direction:column;z-index:200;box-shadow:0 10px 50px rgba(0,0,0,.7);overflow:hidden}
+#combos-popup.visible{display:flex}
+#combos-head{padding:11px 15px;background:rgba(30,100,60,.25);border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;font-size:.88rem;font-weight:600}
+#combos-search{margin:9px 10px 0;padding:7px 10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:9px;color:#fff;font-size:.8rem;outline:none;width:calc(100% - 20px)}
+#combos-search:focus{border-color:#44cc88}
+#combos-list{flex:1;overflow-y:auto;padding:6px 8px 8px;display:flex;flex-direction:column;gap:4px}
+#combos-list::-webkit-scrollbar{width:3px}
+#combos-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:2px}
+.combo-item{padding:8px 10px;border-radius:9px;cursor:pointer;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.04);transition:background .12s,border-color .12s;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.combo-item:hover{background:rgba(68,204,136,.12);border-color:rgba(68,204,136,.3)}
+.combo-name{font-size:.8rem;color:#dde;flex:1}
+.combo-formula{font-size:.75rem;color:#44cc88;font-weight:600;opacity:.85;white-space:nowrap}
+#combos-x{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:5px}
+#combos-x:hover{color:#fff}
 /* ── AI Chat ── */
 #ai-fab{position:fixed;bottom:22px;right:22px;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#5566ff,#9944ff);border:none;cursor:pointer;font-size:1.5rem;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 22px rgba(100,80,255,.55);z-index:200;transition:transform .2s,box-shadow .2s}
 #ai-fab:hover{transform:scale(1.1);box-shadow:0 6px 30px rgba(100,80,255,.75)}
@@ -266,13 +290,22 @@ canvas{display:block}
     <button class="btn btn-quiz" id="btn-quiz">🎯 Quiz</button>
   </div>
   <div id="bond-controls">
-    <input id="el1" type="text" placeholder="Element 1 (e.g. H)" />
-    <input id="n1" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count of element 1" />
-    <input id="el2" type="text" placeholder="Element 2 (e.g. O)" />
-    <input id="n2" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count of element 2" />
-    <input id="el3" type="text" placeholder="Element 3 — optional" />
-    <input id="n3" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count of element 3" />
-    <button class="btn btn-gen" id="btn-combine">Combine</button>
+    <div class="bond-search-group">
+      <input id="el1" type="text" placeholder="Search element 1…" autocomplete="off" />
+      <input id="n1" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count" />
+      <div id="results1" class="bond-results"></div>
+    </div>
+    <div class="bond-search-group">
+      <input id="el2" type="text" placeholder="Search element 2…" autocomplete="off" />
+      <input id="n2" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count" />
+      <div id="results2" class="bond-results"></div>
+    </div>
+    <div class="bond-search-group">
+      <input id="el3" type="text" placeholder="Element 3 (optional)…" autocomplete="off" />
+      <input id="n3" type="number" min="1" max="9" value="1" class="cnt-inp" title="Count" />
+      <div id="results3" class="bond-results"></div>
+    </div>
+    <button class="btn btn-gen" id="btn-combine">⚛ Combine</button>
   </div>
   <div id="theme-btns">
     <button class="tbtn active" data-t="dark" title="Dark theme"></button>
@@ -327,10 +360,22 @@ canvas{display:block}
     <span id="b-badge" class="badge"></span>
     <img id="b-img" style="width:100%;border-radius:8px;margin:8px 0 4px;display:none;object-fit:cover;max-height:160px" />
     <div id="b-det"></div>
+    <button id="btn-dl-bond">⬇ Download STL</button>
   </div>
   <div id="err">Element not found. Try "Carbon", "Fe", or "26".</div>
   <div id="bond-err"></div>
   <div id="hint">Enter an element above to begin</div>
+</div>
+
+<!-- Combos Popup -->
+<button id="combos-fab">📋 Possible Combinations</button>
+<div id="combos-popup">
+  <div id="combos-head">
+    <span>📋 Possible Combinations</span>
+    <button id="combos-x">✕</button>
+  </div>
+  <input id="combos-search" type="text" placeholder="Filter compounds…" autocomplete="off" />
+  <div id="combos-list"></div>
 </div>
 
 <!-- Periodic Table Modal -->
@@ -903,6 +948,68 @@ dc('H+Mg+O',{name:'Magnesium Hydroxide',formula:'Mg(OH)₂',bondType:'Ionic + Co
 dc('C+N+Na',{name:'Sodium Cyanide',formula:'NaCN',bondType:'Ionic + Covalent',shape:'Linear',angle:'180°',desc:'Extremely toxic — blocks cells from using oxygen, killing within minutes. Used in gold mining to leach gold from ore, and in electroplating. One of the most tightly regulated industrial chemicals on Earth.',atoms:[{el:'Na',p:[-3.5,0,0]},{el:'C',p:[0,0,0]},{el:'N',p:[2.8,0,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:3}]});
 dc('C+K+O',{name:'Potassium Carbonate',formula:'K₂CO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Known as potash — one of the earliest industrial chemicals, made by leaching wood ash with water. Used to make soap, glass, and gunpowder for centuries. Potassium gets its symbol K from "kalium," derived from potash.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]},{el:'K',p:[3.8,0,0]},{el:'K',p:[-3.2,2.5,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:1,b:4,o:1},{a:2,b:5,o:1}]});
 
+// ── 50 New 3-Element Compounds ────────────────────────────────────────────────
+// Acids
+dc('H2CO3',{name:'Carbonic Acid',formula:'H₂CO₃',bondType:'Polar Covalent',shape:'Planar',angle:'120°',desc:'Forms when CO₂ dissolves in water — why carbonated drinks are mildly acidic. In your red blood cells it ferries CO₂ from tissues to lungs for exhalation. Highly unstable; rapidly decomposes back to CO₂ and water.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'H',p:[3.3,1,0]},{el:'O',p:[-1.15,2,0]},{el:'H',p:[-2.15,2.8,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:2}]});
+dc('HNO2',{name:'Nitrous Acid',formula:'HNO₂',bondType:'Polar Covalent',shape:'Bent',angle:'120°',desc:'A weak, unstable acid that only exists in dilute solution. Decomposes rapidly to nitric oxide and nitric acid. Used in organic chemistry to make diazonium salts — precursors to dyes and pharmaceuticals.',atoms:[{el:'H',p:[-3,1.2,0]},{el:'O',p:[-1.8,0.6,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2.3,0,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:2,b:3,o:2}]});
+dc('H2SO3',{name:'Sulfurous Acid',formula:'H₂SO₃',bondType:'Polar Covalent',shape:'Pyramidal',angle:'107°',desc:'Forms when SO₂ dissolves in water — the acidic component of acid rain. Used as a preservative in wine and dried fruit under the name "sulfite." The SO₂ emissions from coal plants that cause acid rain originate here.',atoms:[{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'H',p:[3.2,1,0]},{el:'O',p:[-1.1,2,0]},{el:'H',p:[-2.1,2.8,0]},{el:'O',p:[0,-2.3,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:2}]});
+dc('H3PO3',{name:'Phosphorous Acid',formula:'H₃PO₃',bondType:'Polar Covalent',shape:'Pyramidal',angle:'107°',desc:'A diprotic acid despite 3 hydrogen atoms — one H bonds directly to phosphorus and cannot ionize. Used as a reducing agent and in making stabilisers for PVC plastic.',atoms:[{el:'P',p:[0,0,0]},{el:'O',p:[0,2.5,0]},{el:'H',p:[0,3.8,0]},{el:'O',p:[2.2,-1,0]},{el:'H',p:[3.2,-1.8,0]},{el:'O',p:[-2.2,-1,0]},{el:'H',p:[-3.2,-1.8,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1}]});
+dc('HClO3',{name:'Chloric Acid',formula:'HClO₃',bondType:'Polar Covalent',shape:'Pyramidal',angle:'107°',desc:'A strong acid and powerful oxidizer. Its salts (chlorates) were once widely used in fireworks and explosives. Chlorate-based weed killers were banned in many countries after catastrophic fires in storage facilities.',atoms:[{el:'Cl',p:[0,0,0]},{el:'O',p:[0,2.5,0]},{el:'H',p:[0,3.8,0]},{el:'O',p:[2.2,-1.2,0]},{el:'O',p:[-2.2,-1.2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:2},{a:0,b:4,o:2}]});
+dc('HClO4',{name:'Perchloric Acid',formula:'HClO₄',bondType:'Polar Covalent',shape:'Tetrahedral',angle:'109.5°',desc:'The strongest common acid — a 1M solution has a pH of -1. Anhydrous perchloric acid is explosively unstable. Widely used in analytical chemistry and as ammonium perchlorate in rocket propellants.',atoms:[{el:'Cl',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'H',p:[3.3,0.8,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]},{el:'O',p:[0,0,2.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:2},{a:0,b:4,o:2},{a:0,b:5,o:2}]});
+dc('H3BO3',{name:'Boric Acid',formula:'H₃BO₃',bondType:'Polar Covalent',shape:'Trigonal Planar',angle:'120°',desc:'A mild antiseptic in eyewash and wound care. Borax (sodium borate) used in laundry detergent dissolves in water to form boric acid. Also works as a wood preservative and effective cockroach insecticide.',atoms:[{el:'B',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'H',p:[3.3,0.8,0]},{el:'O',p:[-1.15,2,0]},{el:'H',p:[-2.15,2.8,0]},{el:'O',p:[-1.15,-2,0]},{el:'H',p:[-2.15,-2.8,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1}]});
+dc('HCOOH',{name:'Formic Acid',formula:'HCOOH',bondType:'Polar Covalent',shape:'Planar',angle:'120°',desc:'The simplest carboxylic acid — responsible for the sting of ant and bee venom (formica is Latin for ant). Used to preserve silage on farms. Also produced during methanol metabolism, which is why methanol poisoning is so dangerous.',atoms:[{el:'H',p:[-3,0,0]},{el:'C',p:[-1.2,0,0]},{el:'O',p:[0.5,1.5,0]},{el:'H',p:[0.5,2.8,0]},{el:'O',p:[0.5,-1.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:1,b:4,o:2}]});
+dc('H2CrO4',{name:'Chromic Acid',formula:'H₂CrO₄',bondType:'Polar Covalent',shape:'Tetrahedral',angle:'109.5°',desc:'A powerful orange oxidizer used in chrome plating, metal polishing, and etching circuit boards. Extremely toxic and carcinogenic — largely being replaced by safer electroplating processes in modern industry.',atoms:[{el:'Cr',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'H',p:[3.3,0.8,0]},{el:'O',p:[-1.15,2,0]},{el:'H',p:[-2.15,2.8,0]},{el:'O',p:[-1.15,-2,0]},{el:'O',p:[0,0,2.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:2},{a:0,b:6,o:2}]});
+// Hydroxides
+dc('LiOH',{name:'Lithium Hydroxide',formula:'LiOH',bondType:'Ionic + Covalent',shape:'Linear',angle:'180°',desc:'Used in spacecraft and submarines to scrub CO₂ from the air — lithium reacts more efficiently per gram than any other hydroxide. Also used in lithium-ion battery electrolytes and high-temperature lubricating greases.',atoms:[{el:'Li',p:[-2.2,0,0]},{el:'O',p:[0.5,0,0]},{el:'H',p:[2.5,0,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1}]});
+dc('FeOH3',{name:'Iron(III) Hydroxide',formula:'Fe(OH)₃',bondType:'Ionic + Covalent',shape:'Trigonal',angle:'109°',desc:'The rusty-brown precipitate forming when iron compounds meet bases. Used in water treatment to remove phosphates and arsenic. The rust-red stains on concrete and soil come from Fe(OH)₃ slowly dehydrating to iron oxide.',atoms:[{el:'Fe',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]},{el:'O',p:[0,2.5,0]},{el:'H',p:[0,3.8,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1}]});
+dc('CuOH2',{name:'Copper(II) Hydroxide',formula:'Cu(OH)₂',bondType:'Ionic + Covalent',shape:'Angular',angle:'109°',desc:'The vivid blue solid used as a fungicide on grapevines and crops. Bordeaux mixture — copper hydroxide combined with lime — has been used in French vineyards since 1885. Also a pigment and seed treatment.',atoms:[{el:'Cu',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1}]});
+dc('ZnOH2',{name:'Zinc Hydroxide',formula:'Zn(OH)₂',bondType:'Ionic + Covalent',shape:'Angular',angle:'109°',desc:'An amphoteric compound that dissolves in both acids and bases. Found naturally as the mineral wülfingite. Used in surgical dressings and as a precursor to zinc oxide. The human body uses zinc in hundreds of enzymes.',atoms:[{el:'Zn',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1}]});
+dc('BaOH2',{name:'Barium Hydroxide',formula:'Ba(OH)₂',bondType:'Ionic + Covalent',shape:'Angular',angle:'109°',desc:'Its reaction with ammonium thiocyanate is so endothermic it can freeze water — a famous chemistry demonstration. One of the few soluble barium compounds. Used to purify beet sugar and as a base in organic synthesis.',atoms:[{el:'Ba',p:[0,0,0]},{el:'O',p:[-2.3,-1.5,0]},{el:'H',p:[-3.3,-2.5,0]},{el:'O',p:[2.3,-1.5,0]},{el:'H',p:[3.3,-2.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1}]});
+// Carbonates
+dc('MgCO3',{name:'Magnesium Carbonate',formula:'MgCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'The chalk gymnasts, rock climbers, and weightlifters use to dry their hands. Found naturally as magnesite. The purest deposits go into refractory bricks for high-temperature furnaces in steel mills.',atoms:[{el:'Mg',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('FeCO3',{name:'Iron(II) Carbonate',formula:'FeCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Found as the mineral siderite — one of the iron ores used to smelt iron. Oxidizes to iron oxide over time. Named from the Greek for "iron star" due to its common star-shaped crystal formations.',atoms:[{el:'Fe',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('CuCO3',{name:'Copper Carbonate',formula:'CuCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'The blue-green patina (verdigris) on copper rooftops, the Statue of Liberty, and old coins is a mix of copper carbonate and copper hydroxide. It actually protects the copper beneath from further corrosion.',atoms:[{el:'Cu',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('ZnCO3',{name:'Zinc Carbonate',formula:'ZnCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Found as the mineral smithsonite — named after James Smithson who founded the Smithsonian Institution. An important zinc ore. When heated it decomposes to zinc oxide and CO₂, used to make sunscreen and rubber additives.',atoms:[{el:'Zn',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('PbCO3',{name:'Lead Carbonate',formula:'PbCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'The mineral cerussite — used for millennia as a white pigment (lead white). Renaissance paintings owe their distinctive whites to it. Now known to be highly toxic and banned from paints in most countries since the 1970s.',atoms:[{el:'Pb',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('Ag2CO3',{name:'Silver Carbonate',formula:'Ag₂CO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'A pale yellow powder used in organic chemistry to selectively protect molecules. Decomposes to silver metal and CO₂ when heated. Used in specialist electroplating baths.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'Ag',p:[-1.15,3.8,0]},{el:'O',p:[-1.15,-2,0]},{el:'Ag',p:[-1.15,-3.8,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1}]});
+dc('Li2CO3',{name:'Lithium Carbonate',formula:'Li₂CO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'One of the most important psychiatric drugs — used to treat bipolar disorder since the 1970s. Stabilizes mood by altering neurotransmitter signaling in ways still not fully understood. Also key in lithium-ion battery manufacturing.',atoms:[{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'Li',p:[-1.15,3.8,0]},{el:'O',p:[-1.15,-2,0]},{el:'Li',p:[-1.15,-3.8,0]}],bonds:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1}]});
+dc('BaCO3',{name:'Barium Carbonate',formula:'BaCO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (CO₃²⁻)',angle:'120°',desc:'Used to make specialty glass for CRT TV screens to block X-ray emission. Also a starting material for barium chemicals. Toxic — decomposes in stomach acid to release soluble, poisonous Ba²⁺ ions.',atoms:[{el:'Ba',p:[-3.8,0,0]},{el:'C',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+// Sulfates
+dc('CaSO4',{name:'Calcium Sulfate',formula:'CaSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'Gypsum in its hydrated form — the white rock in every sheet of drywall. Plaster of Paris is the hemihydrate that sets hard when mixed with water. Also used to firm tofu and as a soil conditioner.',atoms:[{el:'Ca',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('MgSO4',{name:'Magnesium Sulfate',formula:'MgSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'Epsom salt — named after the English town where it was discovered in mineral springs. Used in bath soaks, as a laxative, and by gardeners to add magnesium to depleted soil. Also used in brewing to harden water.',atoms:[{el:'Mg',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('CuSO4',{name:'Copper(II) Sulfate',formula:'CuSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'The iconic vivid blue crystals of chemistry class. Anhydrous CuSO₄ is white and turns blue by absorbing water — used to detect moisture. Kills algae in swimming pools, treats athlete\'s foot, and electroplates copper.',atoms:[{el:'Cu',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('ZnSO4',{name:'Zinc Sulfate',formula:'ZnSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'A dietary zinc supplement for zinc deficiency. Used to preserve wood and leather, and as a mordant in textile dyeing. In agriculture it corrects zinc deficiency in soil, which affects billions of dollars in crop yields.',atoms:[{el:'Zn',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('FeSO4',{name:'Iron(II) Sulfate',formula:'FeSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'Green vitriol — used since ancient times as a dye mordant. The cheap iron supplement in iron deficiency anemia tablets. Acidifies soil for acid-loving plants like blueberries and azaleas.',atoms:[{el:'Fe',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('Na2SO4',{name:'Sodium Sulfate',formula:'Na₂SO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'Glauber\'s salt in hydrated form — a powerful laxative used since the 1600s. Produced in huge quantities as a byproduct of making rayon and paper. Added to detergents as a filler to control powder flow.',atoms:[{el:'Na',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'Na',p:[-0.7,0,-3.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('K2SO4',{name:'Potassium Sulfate',formula:'K₂SO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'A fertilizer for chloride-sensitive crops like tobacco, grapes, and berries that cannot tolerate potassium chloride. Its crystals were once called "vitriol of tartar." Also used to make alum and specialty glass.',atoms:[{el:'K',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'K',p:[-0.7,0,-3.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('BaSO4',{name:'Barium Sulfate',formula:'BaSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'The white powder swallowed before a GI X-ray — coats the stomach opaquely without being absorbed (unlike other toxic barium compounds). Also the main pigment in "permanent white" artist\'s paint.',atoms:[{el:'Ba',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('PbSO4',{name:'Lead Sulfate',formula:'PbSO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (SO₄²⁻)',angle:'109.5°',desc:'Forms the white paste in lead-acid car batteries during discharge. The battery recharges by converting PbSO₄ back to lead and lead dioxide. Occurs naturally as the mineral anglesite in oxidized lead ore.',atoms:[{el:'Pb',p:[-4,0,0]},{el:'S',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+// Nitrates & Nitrites
+dc('KNO3',{name:'Potassium Nitrate',formula:'KNO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (NO₃⁻)',angle:'120°',desc:'Saltpeter — an oxidizer in gunpowder for over 1,000 years. The Chinese discovered charcoal + sulfur + saltpeter produces fast-burning powder. Also used as a food preservative (curing salt) in bacon and salami.',atoms:[{el:'K',p:[-3.8,0,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('NaNO3',{name:'Sodium Nitrate',formula:'NaNO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (NO₃⁻)',angle:'120°',desc:'Chile saltpeter — vast natural deposits in the Atacama Desert made Chile wealthy in the 1800s. Used in fertilizers and food preservation. The pink color of cured meats like hot dogs comes from sodium nitrate.',atoms:[{el:'Na',p:[-3.8,0,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('AgNO3',{name:'Silver Nitrate',formula:'AgNO₃',bondType:'Ionic + Covalent',shape:'Trigonal Planar (NO₃⁻)',angle:'120°',desc:'Turns skin permanently black on contact by depositing silver metal in tissue — a reaction photographers exploit to make photographs. Used in newborns\' eyes to prevent blindness. Key reagent in the Tollens test for sugars.',atoms:[{el:'Ag',p:[-3.8,0,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'O',p:[-1.15,2,0]},{el:'O',p:[-1.15,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('CaNO32',{name:'Calcium Nitrate',formula:'Ca(NO₃)₂',bondType:'Ionic + Covalent',shape:'Trigonal Planar (NO₃⁻) ×2',angle:'120°',desc:'A fast-acting fertilizer delivering both calcium and nitrogen directly to plants. Hygroscopic — absorbs moisture from air so readily it was used as an explosive in cold mining when mixed with fuel oil.',atoms:[{el:'Ca',p:[0,0,0]},{el:'N',p:[3.5,0,0]},{el:'O',p:[5.8,0,0]},{el:'O',p:[2.35,2,0]},{el:'O',p:[2.35,-2,0]},{el:'N',p:[-3.5,0,0]},{el:'O',p:[-5.8,0,0]},{el:'O',p:[-2.35,2,0]},{el:'O',p:[-2.35,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:2},{a:5,b:7,o:1},{a:5,b:8,o:1}]});
+dc('NH4NO3',{name:'Ammonium Nitrate',formula:'NH₄NO₃',bondType:'Ionic',shape:'Tetrahedral (NH₄⁺)',angle:'109.5°',desc:'Essential nitrogen fertilizer — and one of the most dangerous explosives known. The 2020 Beirut explosion, 1995 Oklahoma City bombing, and 1947 Texas City disaster all used ammonium nitrate. Requires fuel and detonation to explode under normal conditions.',atoms:[{el:'N',p:[-2.5,0,0]},{el:'H',p:[-4.2,0,0]},{el:'H',p:[-1.7,1.8,0]},{el:'H',p:[-1.7,-0.9,1.6]},{el:'H',p:[-1.7,-0.9,-1.6]},{el:'N',p:[2.5,0,0]},{el:'O',p:[4.8,0,0]},{el:'O',p:[1.35,2.1,0]},{el:'O',p:[1.35,-2.1,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:5,b:6,o:2},{a:5,b:7,o:1},{a:5,b:8,o:1}]});
+dc('NaNO2',{name:'Sodium Nitrite',formula:'NaNO₂',bondType:'Ionic + Covalent',shape:'Bent (NO₂⁻)',angle:'115°',desc:'Preserves meat against botulism and gives cured meats their pink color. Controversial — can form carcinogenic nitrosamines when cooked at high temperature. Also used as a corrosion inhibitor in industrial cooling systems.',atoms:[{el:'Na',p:[-3.8,0,0]},{el:'N',p:[0,0,0]},{el:'O',p:[2,1.5,0]},{el:'O',p:[2,-1.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1}]});
+dc('CuNO32',{name:'Copper(II) Nitrate',formula:'Cu(NO₃)₂',bondType:'Ionic + Covalent',shape:'Trigonal Planar (NO₃⁻) ×2',angle:'120°',desc:'Deep blue crystals that produce vivid blue-green flames when burned — used in fireworks. Reacts dramatically with aluminum foil in an exothermic demonstration. A key reagent for making other copper compounds.',atoms:[{el:'Cu',p:[0,0,0]},{el:'N',p:[3.5,0,0]},{el:'O',p:[5.8,0,0]},{el:'O',p:[2.35,2,0]},{el:'O',p:[2.35,-2,0]},{el:'N',p:[-3.5,0,0]},{el:'O',p:[-5.8,0,0]},{el:'O',p:[-2.35,2,0]},{el:'O',p:[-2.35,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:2},{a:5,b:7,o:1},{a:5,b:8,o:1}]});
+// Phosphates
+dc('Na3PO4',{name:'Sodium Phosphate',formula:'Na₃PO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (PO₄³⁻)',angle:'109.5°',desc:'A common food additive (E339) improving texture in processed cheese and meats. Used to clean metal before painting and as a laxative. Its strong alkalinity makes it an excellent heavy-duty degreaser.',atoms:[{el:'P',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'Na',p:[3.8,0,0]},{el:'O',p:[-0.8,2.2,0]},{el:'Na',p:[-0.8,3.8,0]},{el:'O',p:[-0.8,-2.2,0]},{el:'Na',p:[-0.8,-3.8,0]},{el:'O',p:[0,0,2.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1},{a:0,b:7,o:2}]});
+dc('K3PO4',{name:'Potassium Phosphate',formula:'K₃PO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (PO₄³⁻)',angle:'109.5°',desc:'A fertilizer providing both potassium and phosphorus — two of the three primary plant nutrients (N, P, K on every fertilizer bag). Added to food as a pH adjuster and moisture retainer. Also in animal feed.',atoms:[{el:'P',p:[0,0,0]},{el:'O',p:[2.3,0,0]},{el:'K',p:[3.8,0,0]},{el:'O',p:[-0.8,2.2,0]},{el:'K',p:[-0.8,3.8,0]},{el:'O',p:[-0.8,-2.2,0]},{el:'K',p:[-0.8,-3.8,0]},{el:'O',p:[0,0,2.5]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:3,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1},{a:0,b:7,o:2}]});
+dc('Ca3PO42',{name:'Calcium Phosphate',formula:'Ca₃(PO₄)₂',bondType:'Ionic + Covalent',shape:'Tetrahedral (PO₄³⁻)',angle:'109.5°',desc:'The main mineral in your bones and teeth — your skeleton is crystalline calcium phosphate. Hydroxyapatite (a form of calcium phosphate) makes up 70% of bone by weight. Also used as a dietary supplement and anti-caking agent.',atoms:[{el:'Ca',p:[0,0,0]},{el:'P',p:[3.5,1.5,0]},{el:'O',p:[5.8,1.5,0]},{el:'O',p:[2.7,3.5,0]},{el:'O',p:[2.7,-0.5,0]},{el:'O',p:[3.5,1.5,2.2]},{el:'P',p:[-3.5,-1.5,0]},{el:'O',p:[-5.8,-1.5,0]},{el:'O',p:[-2.7,-3.5,0]},{el:'O',p:[-2.7,0.5,0]},{el:'O',p:[-3.5,-1.5,2.2]},{el:'Ca',p:[4.5,-2,0]},{el:'Ca',p:[-4.5,2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:2},{a:0,b:6,o:1},{a:6,b:7,o:1},{a:6,b:8,o:1},{a:6,b:9,o:1},{a:6,b:10,o:2},{a:11,b:1,o:1},{a:12,b:6,o:1}]});
+// Organic
+dc('C2H5OH',{name:'Ethanol',formula:'C₂H₅OH',bondType:'Polar Covalent',shape:'Tetrahedral',angle:'109.5°',desc:'The drinking alcohol in every alcoholic beverage, fermented from sugars by yeast for 10,000+ years. At 70% concentration it kills bacteria by denaturing proteins — the basis of hand sanitizer. Also blended into gasoline as a biofuel.',atoms:[{el:'C',p:[-2.5,0,0]},{el:'H',p:[-3.5,1.5,0]},{el:'H',p:[-3.5,-1.5,0]},{el:'H',p:[-3.5,0,1.5]},{el:'C',p:[0,0,0]},{el:'H',p:[0,1.5,1.5]},{el:'H',p:[0,-1.5,1.5]},{el:'O',p:[2.5,0,0]},{el:'H',p:[3.5,1.2,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1},{a:4,b:6,o:1},{a:4,b:7,o:1},{a:7,b:8,o:1}]});
+dc('CH3COOH',{name:'Acetic Acid',formula:'CH₃COOH',bondType:'Polar Covalent',shape:'Planar',angle:'120°',desc:'The acid in vinegar (4–8% solution). Produced by fermenting ethanol. Used to make plastics (cellulose acetate for film), as a descaler, and in making aspirin. The smell of vinegar is pure acetic acid.',atoms:[{el:'C',p:[-2.5,0,0]},{el:'H',p:[-3.5,1.5,0]},{el:'H',p:[-3.5,-1.5,0]},{el:'H',p:[-3.5,0,1.5]},{el:'C',p:[0,0,0]},{el:'O',p:[2,1.5,0]},{el:'H',p:[3,2.3,0]},{el:'O',p:[2,-1.5,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1},{a:5,b:6,o:1},{a:4,b:7,o:2}]});
+dc('CH3COCH3',{name:'Acetone',formula:'(CH₃)₂CO',bondType:'Polar Covalent',shape:'Trigonal Planar',angle:'120°',desc:'The most common organic solvent — the main ingredient in nail polish remover. Your body naturally produces it when burning fat. One of the few solvents miscible with both water and oils. Extremely flammable.',atoms:[{el:'C',p:[-3.5,0,0]},{el:'H',p:[-4.5,1.4,0]},{el:'H',p:[-4.5,-1.4,0]},{el:'H',p:[-4.5,0,1.4]},{el:'C',p:[0,0,0]},{el:'O',p:[0,2.5,0]},{el:'C',p:[3.5,0,0]},{el:'H',p:[4.5,1.4,0]},{el:'H',p:[4.5,-1.4,0]},{el:'H',p:[4.5,0,1.4]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:2},{a:4,b:6,o:1},{a:6,b:7,o:1},{a:6,b:8,o:1},{a:6,b:9,o:1}]});
+dc('C3H8O3',{name:'Glycerol',formula:'C₃H₈O₃',bondType:'Polar Covalent',shape:'Extended Chain',angle:'109°',desc:'The backbone of all fat molecules — three fatty acids hang off a glycerol in every triglyceride. A byproduct of soap and biodiesel production. Used as a moisturizer in cosmetics, a sweetener, and to keep tobacco moist.',atoms:[{el:'C',p:[-4,0,0]},{el:'O',p:[-5.5,1.5,0]},{el:'H',p:[-6.5,1,0]},{el:'H',p:[-4.8,1.5,0]},{el:'H',p:[-4.8,-1.5,0]},{el:'C',p:[0,0,0]},{el:'O',p:[0,2.2,0]},{el:'H',p:[0,3.5,0]},{el:'H',p:[1,-.8,1.5]},{el:'C',p:[4,0,0]},{el:'O',p:[5.5,1.5,0]},{el:'H',p:[6.5,1,0]},{el:'H',p:[4.8,1.5,0]},{el:'H',p:[4.8,-1.5,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:0,b:5,o:1},{a:5,b:6,o:1},{a:6,b:7,o:1},{a:5,b:8,o:1},{a:5,b:9,o:1},{a:9,b:10,o:1},{a:10,b:11,o:1},{a:9,b:12,o:1},{a:9,b:13,o:1}]});
+dc('C2H6O2',{name:'Ethylene Glycol',formula:'C₂H₆O₂',bondType:'Polar Covalent',shape:'Extended Chain',angle:'109°',desc:'The main ingredient in antifreeze — lowers the freezing point of water in car radiators. Tastes sweet but is fatally toxic to animals and children. Metabolizes to oxalic acid which crystallizes in kidneys. Used to make polyester (PET plastic).',atoms:[{el:'O',p:[-4,0,0]},{el:'H',p:[-5,1.2,0]},{el:'C',p:[-2,0,0]},{el:'H',p:[-2,1.5,1]},{el:'H',p:[-2,-1.5,1]},{el:'C',p:[2,0,0]},{el:'H',p:[2,1.5,1]},{el:'H',p:[2,-1.5,1]},{el:'O',p:[4,0,0]},{el:'H',p:[5,1.2,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:2,b:4,o:1},{a:2,b:5,o:1},{a:5,b:6,o:1},{a:5,b:7,o:1},{a:5,b:8,o:1},{a:8,b:9,o:1}]});
+dc('CH3CHO',{name:'Acetaldehyde',formula:'CH₃CHO',bondType:'Polar Covalent',shape:'Planar',angle:'120°',desc:'Responsible for alcohol-related headaches — your liver converts ethanol into acetaldehyde before breaking it down further. Also the aroma compound in many fruits. A key building block in organic chemical synthesis.',atoms:[{el:'C',p:[-2.5,0,0]},{el:'H',p:[-3.5,1.4,0]},{el:'H',p:[-3.5,-1.4,0]},{el:'H',p:[-3.5,0,1.4]},{el:'C',p:[0.5,0,0]},{el:'O',p:[0.5,2.3,0]},{el:'H',p:[2.5,-0.8,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:2},{a:4,b:6,o:1}]});
+dc('C3H7OH',{name:'Propanol',formula:'C₃H₇OH',bondType:'Polar Covalent',shape:'Extended Chain',angle:'109°',desc:'A three-carbon alcohol used as a solvent and in cosmetics and pharmaceuticals. Its isomer isopropanol (rubbing alcohol) is the main ingredient in hand sanitizer and lens-cleaning wipes — a stronger disinfectant than ethanol.',atoms:[{el:'C',p:[-4.5,0,0]},{el:'H',p:[-5.5,1.4,0]},{el:'H',p:[-5.5,-1.4,0]},{el:'H',p:[-5.5,0,1.4]},{el:'C',p:[-1.5,0,0]},{el:'H',p:[-1.5,1.5,1]},{el:'H',p:[-1.5,-1.5,1]},{el:'C',p:[1.5,0,0]},{el:'H',p:[1.5,1.5,1]},{el:'H',p:[1.5,-1.5,1]},{el:'O',p:[4,0,0]},{el:'H',p:[5,1.2,0]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1},{a:4,b:6,o:1},{a:4,b:7,o:1},{a:7,b:8,o:1},{a:7,b:9,o:1},{a:7,b:10,o:1},{a:10,b:11,o:1}]});
+dc('C4H10O',{name:'Diethyl Ether',formula:'(C₂H₅)₂O',bondType:'Polar Covalent',shape:'Bent',angle:'110°',desc:'The original surgical anesthetic — first used publicly in 1846 at Massachusetts General Hospital. Boils at 34.6°C and evaporates at room temperature, making it extremely flammable. Used to extract compounds from plant material.',atoms:[{el:'C',p:[-5.5,0,0]},{el:'H',p:[-6.5,1.4,0]},{el:'H',p:[-6.5,-1.4,0]},{el:'H',p:[-6.5,0,1.4]},{el:'C',p:[-2.5,0,0]},{el:'H',p:[-2.5,1.5,1]},{el:'H',p:[-2.5,-1.5,1]},{el:'O',p:[0,0,0]},{el:'C',p:[2.5,0,0]},{el:'H',p:[2.5,1.5,1]},{el:'H',p:[2.5,-1.5,1]},{el:'C',p:[5.5,0,0]},{el:'H',p:[6.5,1.4,0]},{el:'H',p:[6.5,-1.4,0]},{el:'H',p:[6.5,0,1.4]}],bonds:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1},{a:4,b:5,o:1},{a:4,b:6,o:1},{a:4,b:7,o:1},{a:7,b:8,o:1},{a:8,b:9,o:1},{a:8,b:10,o:1},{a:8,b:11,o:1},{a:11,b:12,o:1},{a:11,b:13,o:1},{a:11,b:14,o:1}]});
+// Other Inorganic
+dc('KMnO4',{name:'Potassium Permanganate',formula:'KMnO₄',bondType:'Ionic + Covalent',shape:'Tetrahedral (MnO₄⁻)',angle:'109.5°',desc:'Vivid purple crystals that turn water intense violet. A strong oxidizer used to purify water, treat skin infections, and as a first-aid antiseptic. Mixed with glycerol it spontaneously bursts into flames — a classic chemistry demonstration.',atoms:[{el:'K',p:[-4,0,0]},{el:'Mn',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-0.7,2.1,0.7]},{el:'O',p:[-0.7,-2.1,0.7]},{el:'O',p:[-0.7,0,-2.1]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:1}]});
+dc('CaSiO3',{name:'Calcium Silicate',formula:'CaSiO₃',bondType:'Ionic + Covalent',shape:'Chain (Pyroxene)',angle:'110°',desc:'The mineral wollastonite — used as a filler in rubber, plastics, and paint. One of the main components of Portland cement after hydration. Chemically stable up to 1000°C, making it ideal for high-temperature insulation boards.',atoms:[{el:'Ca',p:[-3.8,0,0]},{el:'Si',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'O',p:[-1.1,2,0]},{el:'O',p:[-1.1,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:2},{a:1,b:3,o:1},{a:1,b:4,o:1}]});
+dc('Na2SiO3',{name:'Sodium Silicate',formula:'Na₂SiO₃',bondType:'Ionic + Covalent',shape:'Chain',angle:'109°',desc:'Water glass — dissolves in water to make a thick sticky liquid used as a fire retardant, cardboard adhesive, and egg preservative before refrigeration. Mixed with acid it precipitates silica gel — the desiccant in those little "do not eat" packets.',atoms:[{el:'Na',p:[-3.8,0,0]},{el:'Si',p:[0,0,0]},{el:'O',p:[2.2,0,0]},{el:'Na',p:[3.8,0,0]},{el:'O',p:[-1.1,2,0]},{el:'O',p:[-1.1,-2,0]}],bonds:[{a:0,b:1,o:1},{a:1,b:2,o:1},{a:2,b:3,o:1},{a:1,b:4,o:1},{a:1,b:5,o:2}]});
+
 function findCompound(inputs, userCounts){
   const inputMap={};
   inputs.forEach((v,i)=>{
@@ -982,8 +1089,11 @@ function updateBondInfo(c){
     `<hr style="border-color:rgba(255,255,255,.12);margin:8px 0">`+
     `<span style="opacity:.72;font-size:.78rem;font-style:italic">${c.desc}</span>`;
   document.getElementById('bond-info').style.display='block';
+  document.getElementById('btn-dl-bond').style.display='block';
   fetchWikiImage(c.name, document.getElementById('b-img'));
 }
+
+document.getElementById('btn-dl-bond').addEventListener('click', exportSTL);
 
 // ── Bond Mode Logic ───────────────────────────────────────────────────────────
 const bondErr=document.getElementById('bond-err');
@@ -1013,6 +1123,90 @@ function combineBond(){
   document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')combineBond();});
 });
 document.getElementById('btn-combine').addEventListener('click',combineBond);
+
+// ── Combos Popup ─────────────────────────────────────────────────────────────
+const combosFab=document.getElementById('combos-fab');
+const combosPopup=document.getElementById('combos-popup');
+
+function buildCombosList(filter=''){
+  const list=document.getElementById('combos-list');
+  const fl=filter.toLowerCase();
+  list.innerHTML='';
+  Object.values(COMPOUNDS).forEach(c=>{
+    if(fl && !c.name.toLowerCase().includes(fl) && !c.formula.toLowerCase().includes(fl)) return;
+    const item=document.createElement('div');
+    item.className='combo-item';
+    item.innerHTML=`<span class="combo-name">${c.name}</span><span class="combo-formula">${c.formula}</span>`;
+    item.addEventListener('click',()=>{
+      // Extract elements and counts from compound atoms
+      const cnt={};
+      c.atoms.forEach(a=>{ cnt[a.el]=(cnt[a.el]||0)+1; });
+      const syms=Object.keys(cnt);
+      ['el1','el2','el3'].forEach((id,i)=>{
+        const sym=syms[i];
+        if(sym){
+          const el=bySymbol[sym.toLowerCase()];
+          document.getElementById(id).value=el?el.name:'';
+          document.getElementById('n'+(i+1)).value=cnt[sym];
+        } else {
+          document.getElementById(id).value='';
+          document.getElementById('n'+(i+1)).value=1;
+        }
+      });
+      combosPopup.classList.remove('visible');
+      combineBond();
+    });
+    list.appendChild(item);
+  });
+}
+
+combosFab.addEventListener('click',()=>{
+  const open=combosPopup.classList.toggle('visible');
+  if(open){ buildCombosList(); document.getElementById('combos-search').focus(); }
+});
+document.getElementById('combos-x').addEventListener('click',()=>combosPopup.classList.remove('visible'));
+document.getElementById('combos-search').addEventListener('input',function(){ buildCombosList(this.value); });
+
+// Show/hide fab with bond mode
+const _origToggle=document.getElementById('btn-toggle').onclick;
+document.getElementById('btn-toggle').addEventListener('click',()=>{
+  setTimeout(()=>{
+    combosFab.style.display=appMode==='bond'?'flex':'none';
+    if(appMode!=='bond') combosPopup.classList.remove('visible');
+  },0);
+});
+
+// ── Bond Builder Search Autocomplete ─────────────────────────────────────────
+const ELEMENT_NAMES=RAW.map(r=>r[1]);
+
+function bondSearch(inputId, resultsId){
+  const q=document.getElementById(inputId).value.trim().toLowerCase();
+  const box=document.getElementById(resultsId);
+  if(!q){ box.classList.remove('open'); box.innerHTML=''; return; }
+  const matches=ELEMENT_NAMES.filter(n=>n.toLowerCase().startsWith(q)).slice(0,8);
+  if(!matches.length){ box.classList.remove('open'); box.innerHTML=''; return; }
+  box.innerHTML=matches.map(n=>`<div class="bond-result-item">${n}</div>`).join('');
+  box.classList.add('open');
+  box.querySelectorAll('.bond-result-item').forEach(item=>{
+    item.addEventListener('mousedown',e=>{
+      e.preventDefault();
+      document.getElementById(inputId).value=item.textContent;
+      box.classList.remove('open');
+      box.innerHTML='';
+    });
+  });
+}
+
+['el1','el2','el3'].forEach((id,i)=>{
+  const resId='results'+(i+1);
+  document.getElementById(id).addEventListener('input',()=>bondSearch(id,resId));
+  document.getElementById(id).addEventListener('blur',()=>{
+    setTimeout(()=>{ document.getElementById(resId).classList.remove('open'); },150);
+  });
+  document.getElementById(id).addEventListener('keydown',e=>{
+    if(e.key==='Enter') combineBond();
+  });
+});
 
 // ── Mode Switch ───────────────────────────────────────────────────────────────
 let appMode='atom';
