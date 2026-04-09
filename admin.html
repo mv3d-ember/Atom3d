@@ -170,6 +170,19 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
     <!-- STATS -->
     <div class="card">
       <div class="card-label">Statistics</div>
+      <div class="stat-box" style="margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="stat-lbl">Unique Visitors</div>
+          <div style="display:flex;align-items:baseline;gap:8px">
+            <div class="stat-val" id="s-visitors" style="font-size:2rem">—</div>
+            <div class="stat-sub" id="s-visitors-sub">configure GoatCounter in settings</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="stat-lbl">Page Views</div>
+          <div class="stat-val" id="s-pageviews" style="font-size:2rem">—</div>
+        </div>
+      </div>
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-lbl">GitHub Stars</div>
@@ -227,6 +240,15 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
             <div class="sett-note">Needs <code>Contents: Write</code> scope on the repo. Stored only in your browser's localStorage.</div>
           </div>
           <div class="setting-block">
+            <label class="sett-label">GoatCounter (Visitor Analytics)</label>
+            <div class="sett-row" style="margin-bottom:6px">
+              <input type="text" id="gc-code" class="sett-inp" placeholder="your-site-code">
+              <button class="sett-btn" id="save-gc-btn">Save</button>
+            </div>
+            <input type="password" id="gc-tok" class="sett-inp" placeholder="API token from GoatCounter settings" style="width:100%">
+            <div class="sett-note">Free at <strong>goatcounter.com</strong>. Site code = your GoatCounter subdomain. API token from Settings → API in your GoatCounter dashboard. Tracking is already added to the site once deployed.</div>
+          </div>
+          <div class="setting-block">
             <label class="sett-label">Change Admin Password</label>
             <div class="sett-row">
               <input type="password" id="new-pw" class="sett-inp" placeholder="New password (min 6 chars)">
@@ -259,12 +281,14 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
 <script>
 // ── Constants ──
 const OWNER = 'mv3d-ember', REPO = 'atom3d', STATUS_FILE = 'status.json';
-const K_PW    = 'a3d_pw';
-const K_TOKEN = 'a3d_token';
-const K_MAINT = 'a3d_maint';
-const K_MTIME = 'a3d_mtime';
-const K_BANS  = 'a3d_bans';
-const K_LOG   = 'a3d_log';
+const K_PW      = 'a3d_pw';
+const K_TOKEN   = 'a3d_token';
+const K_MAINT   = 'a3d_maint';
+const K_MTIME   = 'a3d_mtime';
+const K_BANS    = 'a3d_bans';
+const K_LOG     = 'a3d_log';
+const K_GC_CODE = 'a3d_gc_code';
+const K_GC_TOK  = 'a3d_gc_tok';
 
 // ── Crypto ──
 async function sha256(s){
@@ -313,6 +337,12 @@ function init(){
   // Token
   const tok = localStorage.getItem(K_TOKEN);
   if(tok) document.getElementById('gh-token').value = tok;
+
+  // GoatCounter
+  const gcCode = localStorage.getItem(K_GC_CODE);
+  const gcTok  = localStorage.getItem(K_GC_TOK);
+  if(gcCode) document.getElementById('gc-code').value = gcCode;
+  if(gcTok)  document.getElementById('gc-tok').value  = gcTok;
 
   // Log
   renderLog();
@@ -469,8 +499,41 @@ function renderBans(){
   ).join('');
 }
 
+// ── Visitor Stats (GoatCounter) ──
+async function loadVisitors(){
+  const code = localStorage.getItem(K_GC_CODE);
+  const tok  = localStorage.getItem(K_GC_TOK);
+  const vEl  = document.getElementById('s-visitors');
+  const pvEl = document.getElementById('s-pageviews');
+  const subEl= document.getElementById('s-visitors-sub');
+
+  if(!code || !tok){
+    vEl.textContent = '—'; pvEl.textContent = '—';
+    subEl.textContent = 'configure GoatCounter in settings';
+    return;
+  }
+  try{
+    const r = await fetch(`https://${code}.goatcounter.com/api/v0/stats/total`, {
+      headers:{'Authorization':'Bearer '+tok}
+    });
+    if(r.ok){
+      const d = await r.json();
+      vEl.textContent  = (d.total_unique ?? 0).toLocaleString();
+      pvEl.textContent = (d.total ?? 0).toLocaleString();
+      subEl.textContent = 'unique visitors · all time';
+    } else {
+      vEl.textContent = 'err'; pvEl.textContent = '—';
+      subEl.textContent = r.status === 403 ? 'invalid token' : 'API error';
+    }
+  } catch{
+    vEl.textContent = '—'; pvEl.textContent = '—';
+    subEl.textContent = 'could not reach GoatCounter';
+  }
+}
+
 // ── Stats ──
 async function loadStats(){
+  loadVisitors();
   // Basic repo info (no auth needed)
   try{
     const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`);
@@ -533,6 +596,17 @@ function saveToken(){
   toast('Token saved', 'ok');
 }
 
+function saveGC(){
+  const code = document.getElementById('gc-code').value.trim();
+  const tok  = document.getElementById('gc-tok').value.trim();
+  if(!code){ toast('Enter your GoatCounter site code', 'err'); return; }
+  localStorage.setItem(K_GC_CODE, code);
+  if(tok) localStorage.setItem(K_GC_TOK, tok);
+  addLog('GoatCounter settings saved');
+  toast('GoatCounter saved', 'ok');
+  loadVisitors();
+}
+
 async function changePw(){
   const v = document.getElementById('new-pw').value;
   if(!v || v.length < 6){ toast('Min 6 characters', 'err'); return; }
@@ -544,7 +618,7 @@ async function changePw(){
 
 function clearAll(){
   if(!confirm('Delete all admin data (token, password, bans, log) and log out?')) return;
-  [K_PW, K_TOKEN, K_MAINT, K_MTIME, K_BANS, K_LOG].forEach(k => localStorage.removeItem(k));
+  [K_PW, K_TOKEN, K_MAINT, K_MTIME, K_BANS, K_LOG, K_GC_CODE, K_GC_TOK].forEach(k => localStorage.removeItem(k));
   logout();
 }
 
@@ -573,10 +647,11 @@ document.getElementById('save-token-btn').addEventListener('click', saveToken);
 document.getElementById('change-pw-btn').addEventListener('click', changePw);
 document.getElementById('clear-btn').addEventListener('click', clearAll);
 document.getElementById('refresh-btn').addEventListener('click', ()=>{
-  ['s-stars','s-deploy','s-commits'].forEach(id => document.getElementById(id).textContent = '…');
+  ['s-stars','s-deploy','s-commits','s-visitors','s-pageviews'].forEach(id => document.getElementById(id).textContent = '…');
   loadStats();
   toast('Stats refreshed');
 });
+document.getElementById('save-gc-btn').addEventListener('click', saveGC);
 </script>
 </body>
 </html>
