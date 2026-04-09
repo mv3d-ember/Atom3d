@@ -112,6 +112,20 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
 .q-link{padding:8px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:8px;color:#99b;font-size:.78rem;text-decoration:none;transition:background .15s;display:inline-block}
 .q-link:hover{background:rgba(255,255,255,.12);color:#dde}
 
+/* ── Themes ── */
+.theme-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.theme-btn{padding:13px 8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:11px;color:#dde;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .16s;font-family:inherit}
+.theme-btn:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.22);transform:scale(1.03)}
+.theme-btn.active{border-color:#5588ff;background:rgba(85,136,255,.14)}
+.theme-btn[data-theme="christmas"].active{border-color:#cc2200;background:rgba(200,34,0,.14)}
+.theme-btn[data-theme="halloween"].active{border-color:#ff6600;background:rgba(255,100,0,.14)}
+.theme-btn[data-theme="easter"].active{border-color:#ff99cc;background:rgba(255,153,204,.12)}
+.theme-btn[data-theme="newyear"].active{border-color:#ffcc00;background:rgba(255,204,0,.12)}
+.theme-btn[data-theme="valentine"].active{border-color:#ff3366;background:rgba(255,51,102,.14)}
+.theme-icon{font-size:1.65rem;line-height:1;pointer-events:none}
+.theme-name{font-size:.7rem;font-weight:600;opacity:.7;letter-spacing:.03em;pointer-events:none}
+.theme-active-label{font-size:.71rem;opacity:.32;text-align:center;margin-top:4px}
+
 /* ── Toast ── */
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#0c0c22;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 22px;font-size:.82rem;color:#dde;opacity:0;transition:all .28s;z-index:9999;pointer-events:none;box-shadow:0 8px 28px rgba(0,0,0,.65);white-space:nowrap}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -185,9 +199,34 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
       </div>
       <div class="stats-grid">
         <div class="stat-box">
-          <div class="stat-lbl">GitHub Stars</div>
+          <div class="stat-lbl">Stars</div>
           <div class="stat-val" id="s-stars">…</div>
-          <div class="stat-sub">repository</div>
+          <div class="stat-sub">GitHub stars</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Forks</div>
+          <div class="stat-val" id="s-forks">…</div>
+          <div class="stat-sub">repository forks</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Watchers</div>
+          <div class="stat-val" id="s-watchers">…</div>
+          <div class="stat-sub">watching</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Open Issues</div>
+          <div class="stat-val" id="s-issues">…</div>
+          <div class="stat-sub">open issues</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Contributors</div>
+          <div class="stat-val" id="s-contributors">…</div>
+          <div class="stat-sub">contributors</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Repo Size</div>
+          <div class="stat-val" id="s-size" style="font-size:1rem;padding-top:6px">…</div>
+          <div class="stat-sub">kilobytes</div>
         </div>
         <div class="stat-box">
           <div class="stat-lbl">Last Deploy</div>
@@ -199,6 +238,11 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
           <div class="stat-val" id="s-commits">…</div>
           <div class="stat-sub">total</div>
         </div>
+        <div class="stat-box" style="grid-column:span 2">
+          <div class="stat-lbl">Latest Commit</div>
+          <div class="stat-val" id="s-lastcommit" style="font-size:.82rem;padding-top:4px;opacity:.8;font-weight:500">…</div>
+          <div class="stat-sub" id="s-lastcommit-time"></div>
+        </div>
         <div class="stat-box">
           <div class="stat-lbl">Blocked IPs</div>
           <div class="stat-val" id="s-banned">0</div>
@@ -206,6 +250,38 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
         </div>
       </div>
       <button class="refresh-btn" id="refresh-btn">Refresh Stats</button>
+    </div>
+
+    <!-- THEMES -->
+    <div class="card">
+      <div class="card-label">Seasonal Themes</div>
+      <div class="theme-grid">
+        <button class="theme-btn" data-theme="" onclick="setTheme('')">
+          <span class="theme-icon">✕</span>
+          <span class="theme-name">None</span>
+        </button>
+        <button class="theme-btn" data-theme="christmas" onclick="setTheme('christmas')">
+          <span class="theme-icon">🎄</span>
+          <span class="theme-name">Christmas</span>
+        </button>
+        <button class="theme-btn" data-theme="halloween" onclick="setTheme('halloween')">
+          <span class="theme-icon">🎃</span>
+          <span class="theme-name">Halloween</span>
+        </button>
+        <button class="theme-btn" data-theme="easter" onclick="setTheme('easter')">
+          <span class="theme-icon">🐣</span>
+          <span class="theme-name">Easter</span>
+        </button>
+        <button class="theme-btn" data-theme="newyear" onclick="setTheme('newyear')">
+          <span class="theme-icon">🎆</span>
+          <span class="theme-name">New Year</span>
+        </button>
+        <button class="theme-btn" data-theme="valentine" onclick="setTheme('valentine')">
+          <span class="theme-icon">💕</span>
+          <span class="theme-name">Valentine</span>
+        </button>
+      </div>
+      <div class="theme-active-label" id="theme-label">No theme active</div>
     </div>
 
     <!-- IP BLOCKLIST -->
@@ -289,6 +365,7 @@ const K_BANS    = 'a3d_bans';
 const K_LOG     = 'a3d_log';
 const K_GC_CODE = 'a3d_gc_code';
 const K_GC_TOK  = 'a3d_gc_tok';
+const K_THEME   = 'a3d_theme';
 
 // ── Crypto ──
 async function sha256(s){
@@ -343,6 +420,9 @@ function init(){
   const gcTok  = localStorage.getItem(K_GC_TOK);
   if(gcCode) document.getElementById('gc-code').value = gcCode;
   if(gcTok)  document.getElementById('gc-tok').value  = gcTok;
+
+  // Theme
+  renderThemeUI(localStorage.getItem(K_THEME) || '');
 
   // Log
   renderLog();
@@ -422,7 +502,7 @@ async function pushStatus(token, maintenance){
     const cur = await fetch(url, {headers: hdrs});
     if(cur.ok){ const d = await cur.json(); sha = d.sha; }
 
-    const payload = {maintenance, banlist: getBans().map(b=>b.ip)};
+    const payload = {maintenance, banlist: getBans().map(b=>b.ip), theme: localStorage.getItem(K_THEME) || null};
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
     const body = {
       message: maintenance ? 'chore: enable maintenance mode' : 'chore: disable maintenance mode',
@@ -499,6 +579,37 @@ function renderBans(){
   ).join('');
 }
 
+// ── Themes ──
+const THEME_LABELS = {christmas:'Christmas 🎄',halloween:'Halloween 🎃',easter:'Easter 🐣',newyear:'New Year 🎆',valentine:"Valentine's 💕"};
+
+async function setTheme(name){
+  const btn = document.querySelector(`.theme-btn[data-theme="${name}"]`);
+  if(btn) btn.style.opacity = '.5';
+
+  localStorage.setItem(K_THEME, name);
+  const token = localStorage.getItem(K_TOKEN);
+  if(token){
+    const maint = localStorage.getItem(K_MAINT) === 'true';
+    const ok = await pushStatus(token, maint);
+    if(!ok){ if(btn) btn.style.opacity=''; return; }
+  } else {
+    toast('No GitHub token — theme saved locally only', 'err');
+  }
+
+  if(btn) btn.style.opacity = '';
+  renderThemeUI(name);
+  addLog(name ? 'Theme enabled: ' + (THEME_LABELS[name]||name) : 'Theme disabled');
+  toast(name ? (THEME_LABELS[name]||name) + ' theme enabled' : 'Theme disabled', 'ok');
+}
+
+function renderThemeUI(name){
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  const active = document.querySelector(`.theme-btn[data-theme="${name||''}"]`);
+  if(active) active.classList.add('active');
+  const lbl = document.getElementById('theme-label');
+  lbl.textContent = name ? 'Active: ' + (THEME_LABELS[name]||name) : 'No theme active';
+}
+
 // ── Visitor Stats (GoatCounter) ──
 async function loadVisitors(){
   const code = localStorage.getItem(K_GC_CODE);
@@ -534,26 +645,47 @@ async function loadVisitors(){
 // ── Stats ──
 async function loadStats(){
   loadVisitors();
-  // Basic repo info (no auth needed)
+  const token = localStorage.getItem(K_TOKEN);
+  const hdrs = token ? {'Authorization':'token '+token} : {};
+
+  // Repo info
   try{
-    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`);
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`, {headers:hdrs});
     if(r.ok){
       const d = await r.json();
-      document.getElementById('s-stars').textContent = d.stargazers_count ?? '—';
-      document.getElementById('s-deploy').textContent = d.pushed_at ? ago(new Date(d.pushed_at)) : '—';
+      document.getElementById('s-stars').textContent    = d.stargazers_count ?? '—';
+      document.getElementById('s-forks').textContent    = d.forks_count ?? '—';
+      document.getElementById('s-watchers').textContent = d.subscribers_count ?? '—';
+      document.getElementById('s-issues').textContent   = d.open_issues_count ?? '—';
+      document.getElementById('s-size').textContent     = d.size ? (d.size >= 1024 ? (d.size/1024).toFixed(1)+' MB' : d.size+' KB') : '—';
+      document.getElementById('s-deploy').textContent   = d.pushed_at ? ago(new Date(d.pushed_at)) : '—';
     }
   } catch{}
 
-  // Commit count (needs token for reliable pagination; works without for small repos)
+  // Contributors
   try{
-    const token = localStorage.getItem(K_TOKEN);
-    const hdrs = token ? {'Authorization':'token '+token} : {};
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contributors?per_page=1&anon=1`, {headers:hdrs});
+    if(r.ok){
+      const link = r.headers.get('Link') || '';
+      const m = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+      document.getElementById('s-contributors').textContent = m ? m[1] : (await r.json()).length || '1';
+    }
+  } catch{}
+
+  // Commits + latest commit message
+  try{
     const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=1`, {headers:hdrs});
     if(r.ok){
       const link = r.headers.get('Link') || '';
       const m = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
       if(m) document.getElementById('s-commits').textContent = m[1];
       else document.getElementById('s-commits').textContent = '< 30';
+      const commits = await r.json();
+      if(commits[0]){
+        const msg = commits[0].commit.message.split('\n')[0];
+        document.getElementById('s-lastcommit').textContent = msg.length > 60 ? msg.slice(0,58)+'…' : msg;
+        document.getElementById('s-lastcommit-time').textContent = ago(new Date(commits[0].commit.author.date));
+      }
     }
   } catch{}
 }
@@ -618,7 +750,7 @@ async function changePw(){
 
 function clearAll(){
   if(!confirm('Delete all admin data (token, password, bans, log) and log out?')) return;
-  [K_PW, K_TOKEN, K_MAINT, K_MTIME, K_BANS, K_LOG, K_GC_CODE, K_GC_TOK].forEach(k => localStorage.removeItem(k));
+  [K_PW, K_TOKEN, K_MAINT, K_MTIME, K_BANS, K_LOG, K_GC_CODE, K_GC_TOK, K_THEME].forEach(k => localStorage.removeItem(k));
   logout();
 }
 
@@ -647,7 +779,7 @@ document.getElementById('save-token-btn').addEventListener('click', saveToken);
 document.getElementById('change-pw-btn').addEventListener('click', changePw);
 document.getElementById('clear-btn').addEventListener('click', clearAll);
 document.getElementById('refresh-btn').addEventListener('click', ()=>{
-  ['s-stars','s-deploy','s-commits','s-visitors','s-pageviews'].forEach(id => document.getElementById(id).textContent = '…');
+  ['s-stars','s-forks','s-watchers','s-issues','s-contributors','s-size','s-deploy','s-commits','s-lastcommit','s-visitors','s-pageviews'].forEach(id => document.getElementById(id).textContent = '…');
   loadStats();
   toast('Stats refreshed');
 });
