@@ -2371,8 +2371,8 @@ function easter(c){var ctx=c.getContext('2d'),W,H;
   var eggs=Array.from({length:28},mkE);
   function drawEgg(p){
     ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=p.op;
-    var w=p.sz*.58,h=p.sz;
-    ctx.beginPath();ctx.moveTo(0,-h);ctx.bezierCurveTo(w*.72,-h,w,h*.28,0,h);ctx.bezierCurveTo(-w,h*.28,-w*.72,-h,0,-h);
+    var w=p.sz*.76,h=p.sz;
+    ctx.beginPath();ctx.moveTo(0,-h*.82);ctx.bezierCurveTo(w*.55,-h*.9,w,-h*.3,w,h*.12);ctx.bezierCurveTo(w,h*.7,w*.52,h,0,h);ctx.bezierCurveTo(-w*.52,h,-w,h*.7,-w,h*.12);ctx.bezierCurveTo(-w,-h*.3,-w*.55,-h*.9,0,-h*.82);ctx.closePath();
     ctx.fillStyle='rgb('+p.c+')';ctx.fill();
     ctx.save();ctx.clip();
     ctx.fillStyle='rgba('+p.pc+',.78)';ctx.strokeStyle='rgba('+p.pc+',.82)';
