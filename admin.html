@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atom3D — Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* ── Login ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 40%,#0d0820 0%,#04040f 70%)}
+.login-box{background:#09091e;border:1px solid rgba(255,255,255,.11);border-radius:20px;padding:44px 38px;width:100%;max-width:360px;box-shadow:0 24px 70px rgba(0,0,0,.75)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo svg{display:block;margin:0 auto 14px;animation:lspin 10s linear infinite}
+@keyframes lspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.login-logo h1{font-size:1.55rem;font-weight:700;letter-spacing:-.01em}
+.login-logo p{font-size:.72rem;opacity:.3;margin-top:5px;letter-spacing:.12em;text-transform:uppercase}
+.login-label{font-size:.72rem;opacity:.4;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;display:block}
+.login-input{width:100%;padding:12px 15px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:10px;color:#fff;font-size:.95rem;outline:none;transition:border-color .2s}
+.login-input:focus{border-color:#6677ff}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#4455ee,#5533cc);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:18px;transition:opacity .15s;letter-spacing:.02em}
+.login-btn:hover{opacity:.88}
+.login-err{color:#ff7777;font-size:.78rem;text-align:center;margin-top:10px;min-height:18px}
+.login-hint{font-size:.68rem;opacity:.2;text-align:center;margin-top:22px}
+
+/* ── Dashboard ── */
+#dashboard{display:none;flex-direction:column;min-height:100vh}
+.adm-header{padding:14px 24px;background:rgba(255,255,255,.035);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.adm-header h1{font-size:1.05rem;font-weight:700;flex:1;min-width:140px}
+.hdr-badge{font-size:.72rem;padding:4px 13px;border-radius:20px;font-weight:700;letter-spacing:.04em;flex-shrink:0}
+.hdr-badge.live{background:rgba(30,180,80,.15);color:#44dd88;border:1px solid rgba(30,180,80,.28)}
+.hdr-badge.maint{background:rgba(255,140,20,.15);color:#ffaa44;border:1px solid rgba(255,140,20,.28)}
+.hdr-logout{padding:7px 14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:8px;color:#aab;font-size:.78rem;cursor:pointer;transition:background .15s}
+.hdr-logout:hover{background:rgba(255,255,255,.14)}
+
+.adm-grid{padding:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;align-items:start}
+.adm-grid .wide{grid-column:1/-1}
+
+/* ── Cards ── */
+.card{background:#09091e;border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:22px 24px}
+.card-label{font-size:.68rem;opacity:.38;text-transform:uppercase;letter-spacing:.1em;margin-bottom:15px}
+
+/* ── Status card ── */
+.status-row{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.status-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0;transition:background .4s,box-shadow .4s}
+.status-dot.live{background:#22dd66;box-shadow:0 0 10px #22dd66}
+.status-dot.maint{background:#ff9933;box-shadow:0 0 10px #ff9933;animation:bpulse 1.5s ease-in-out infinite}
+@keyframes bpulse{0%,100%{opacity:1}50%{opacity:.3}}
+.status-name{font-size:1.35rem;font-weight:700}
+.status-sub{font-size:.75rem;opacity:.35;margin-top:2px}
+.maint-btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;letter-spacing:.04em;transition:transform .18s,opacity .15s}
+.maint-btn:hover:not(:disabled){transform:scale(1.025);opacity:.9}
+.maint-btn:active{transform:scale(.98)}
+.maint-btn:disabled{opacity:.38;cursor:wait;transform:none}
+.maint-btn.go-maint{background:linear-gradient(135deg,#ee5500,#bb2200);color:#fff}
+.maint-btn.go-live{background:linear-gradient(135deg,#22aa55,#116633);color:#fff}
+.status-ts{font-size:.7rem;opacity:.3;margin-top:11px;text-align:center}
+.maint-note{font-size:.7rem;opacity:.28;margin-top:8px;text-align:center;line-height:1.5}
+
+/* ── Stats ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-box{background:rgba(255,255,255,.04);border-radius:10px;padding:14px 15px}
+.stat-lbl{font-size:.66rem;opacity:.38;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.stat-val{font-size:1.45rem;font-weight:700;line-height:1}
+.stat-sub{font-size:.66rem;opacity:.3;margin-top:4px}
+.refresh-btn{margin-top:14px;width:100%;padding:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:9px;color:#ccd;font-size:.8rem;cursor:pointer;transition:background .15s}
+.refresh-btn:hover{background:rgba(255,255,255,.13)}
+
+/* ── IP Blocklist ── */
+.ip-add-row{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+.ip-text{flex:1;min-width:130px;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:9px;color:#fff;font-size:.84rem;font-family:monospace;outline:none}
+.ip-text:focus{border-color:#5588ff}
+.ip-reason{width:140px;padding:9px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:9px;color:#fff;font-size:.82rem;outline:none}
+.ip-reason:focus{border-color:#5588ff}
+.add-btn{padding:9px 16px;background:#4455dd;color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:.83rem;font-weight:600;transition:opacity .15s;flex-shrink:0}
+.add-btn:hover{opacity:.85}
+.ip-scroll{max-height:210px;overflow-y:auto}
+.ip-scroll::-webkit-scrollbar{width:3px}
+.ip-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.ip-entry{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;background:rgba(255,60,60,.06);border:1px solid rgba(255,60,60,.14);margin-bottom:6px}
+.ip-addr{font-family:monospace;font-size:.84rem;color:#ffaaaa;flex:1}
+.ip-rsn{font-size:.7rem;opacity:.4;display:block;margin-top:2px}
+.unban-btn{padding:4px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:6px;color:#bbb;font-size:.73rem;cursor:pointer;flex-shrink:0;transition:all .15s}
+.unban-btn:hover{background:rgba(255,60,60,.18);color:#ff9999;border-color:rgba(255,60,60,.3)}
+.ip-empty{font-size:.8rem;opacity:.28;text-align:center;padding:22px;font-style:italic}
+.cdnwarn{margin-top:12px;padding:10px 13px;background:rgba(255,170,30,.07);border:1px solid rgba(255,170,30,.2);border-radius:9px;font-size:.71rem;color:rgba(255,200,80,.65);line-height:1.55}
+
+/* ── Log ── */
+.log-scroll{max-height:170px;overflow-y:auto}
+.log-scroll::-webkit-scrollbar{width:3px}
+.log-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.log-entry{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 10px;border-radius:7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.055);margin-bottom:5px}
+.log-msg{font-size:.77rem;opacity:.7;flex:1}
+.log-t{font-size:.68rem;opacity:.3;white-space:nowrap}
+.log-empty{font-size:.78rem;opacity:.28;text-align:center;padding:18px;font-style:italic}
+
+/* ── Settings ── */
+.settings-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:560px){.settings-cols{grid-template-columns:1fr}}
+.setting-block{margin-bottom:18px}
+.sett-label{font-size:.7rem;opacity:.4;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;display:block}
+.sett-row{display:flex;gap:7px}
+.sett-inp{flex:1;padding:9px 13px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13);border-radius:9px;color:#fff;font-size:.85rem;outline:none}
+.sett-inp:focus{border-color:#5588ff}
+.sett-btn{padding:9px 15px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.16);border-radius:9px;color:#ccd;font-size:.8rem;cursor:pointer;transition:background .15s;white-space:nowrap}
+.sett-btn:hover{background:rgba(255,255,255,.16)}
+.sett-note{font-size:.67rem;opacity:.25;margin-top:6px;line-height:1.4}
+.sett-btn.danger{background:rgba(255,50,50,.1);border-color:rgba(255,50,50,.22);color:#ff9999}
+.sett-btn.danger:hover{background:rgba(255,50,50,.2)}
+.quick-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.q-link{padding:8px 14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.11);border-radius:8px;color:#99b;font-size:.78rem;text-decoration:none;transition:background .15s;display:inline-block}
+.q-link:hover{background:rgba(255,255,255,.12);color:#dde}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#0c0c22;border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:10px 22px;font-size:.82rem;color:#dde;opacity:0;transition:all .28s;z-index:9999;pointer-events:none;box-shadow:0 8px 28px rgba(0,0,0,.65);white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(40,200,90,.35);color:#55ee99}
+#toast.err{border-color:rgba(255,70,70,.35);color:#ff9999}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="56" height="56" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="9" fill="#cc7722"/>
+        <ellipse cx="50" cy="50" rx="38" ry="11" fill="none" stroke="#ff9944" stroke-width="1.6" opacity=".8"/>
+        <ellipse cx="50" cy="50" rx="38" ry="11" fill="none" stroke="#9a4e18" stroke-width="1.3" transform="rotate(60 50 50)" opacity=".65"/>
+        <ellipse cx="50" cy="50" rx="38" ry="11" fill="none" stroke="#c07030" stroke-width="1.3" transform="rotate(120 50 50)" opacity=".65"/>
+      </svg>
+      <h1>Atom3D Admin</h1>
+      <p>Control Panel</p>
+    </div>
+    <label class="login-label">Password</label>
+    <input type="password" id="pw" class="login-input" placeholder="Enter admin password" autocomplete="current-password">
+    <div id="login-err" class="login-err"></div>
+    <button class="login-btn" id="login-btn">Sign In</button>
+    <div class="login-hint">Default password: atom3d</div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard">
+  <header class="adm-header">
+    <h1>⚛ Atom3D Admin</h1>
+    <span id="hdr-badge" class="hdr-badge live">● LIVE</span>
+    <button class="hdr-logout" id="logout-btn">Logout</button>
+  </header>
+
+  <div class="adm-grid">
+
+    <!-- STATUS -->
+    <div class="card">
+      <div class="card-label">Site Status</div>
+      <div class="status-row">
+        <div class="status-dot live" id="sdot"></div>
+        <div>
+          <div class="status-name" id="sname">Online</div>
+          <div class="status-sub" id="ssub">atom3d.org is live</div>
+        </div>
+      </div>
+      <button class="maint-btn go-maint" id="maint-btn">Enable Maintenance Mode</button>
+      <div class="status-ts" id="sts">Last changed: never</div>
+      <div class="maint-note">Changes push to GitHub and may take ~1 min to propagate.</div>
+    </div>
+
+    <!-- STATS -->
+    <div class="card">
+      <div class="card-label">Statistics</div>
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-lbl">GitHub Stars</div>
+          <div class="stat-val" id="s-stars">…</div>
+          <div class="stat-sub">repository</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Last Deploy</div>
+          <div class="stat-val" id="s-deploy" style="font-size:.95rem;padding-top:4px">…</div>
+          <div class="stat-sub">last push</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Commits</div>
+          <div class="stat-val" id="s-commits">…</div>
+          <div class="stat-sub">total</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-lbl">Blocked IPs</div>
+          <div class="stat-val" id="s-banned">0</div>
+          <div class="stat-sub">in blocklist</div>
+        </div>
+      </div>
+      <button class="refresh-btn" id="refresh-btn">Refresh Stats</button>
+    </div>
+
+    <!-- IP BLOCKLIST -->
+    <div class="card">
+      <div class="card-label">IP Blocklist</div>
+      <div class="ip-add-row">
+        <input type="text" id="ip-inp" class="ip-text" placeholder="IP address (e.g. 1.2.3.4)" maxlength="45">
+        <input type="text" id="ip-rsn" class="ip-reason" placeholder="Reason (optional)" maxlength="60">
+        <button class="add-btn" id="add-ip-btn">Block IP</button>
+      </div>
+      <div class="ip-scroll" id="ip-list"><div class="ip-empty">No blocked IPs</div></div>
+      <div class="cdnwarn">⚠ Blocks are stored in <code>status.json</code> on GitHub. To enforce them, add Cloudflare firewall rules or a reverse proxy that reads this file.</div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div class="card">
+      <div class="card-label">Activity Log</div>
+      <div class="log-scroll" id="log-list"><div class="log-empty">No activity yet</div></div>
+    </div>
+
+    <!-- SETTINGS (full width) -->
+    <div class="card wide">
+      <div class="card-label">Settings</div>
+      <div class="settings-cols">
+        <div>
+          <div class="setting-block">
+            <label class="sett-label">GitHub Personal Access Token</label>
+            <div class="sett-row">
+              <input type="password" id="gh-token" class="sett-inp" placeholder="ghp_…">
+              <button class="sett-btn" id="save-token-btn">Save</button>
+            </div>
+            <div class="sett-note">Needs <code>Contents: Write</code> scope on the repo. Stored only in your browser's localStorage.</div>
+          </div>
+          <div class="setting-block">
+            <label class="sett-label">Change Admin Password</label>
+            <div class="sett-row">
+              <input type="password" id="new-pw" class="sett-inp" placeholder="New password (min 6 chars)">
+              <button class="sett-btn" id="change-pw-btn">Update</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="setting-block">
+            <label class="sett-label">Quick Links</label>
+            <div class="quick-links">
+              <a href="https://atom3d.org" target="_blank" class="q-link">🌐 View Site</a>
+              <a href="https://atom3d.org/maintenance.html" target="_blank" class="q-link">🔧 Preview Maintenance</a>
+              <a href="https://github.com/mv3d-ember/atom3d" target="_blank" class="q-link">GitHub Repo</a>
+            </div>
+          </div>
+          <div class="setting-block" style="margin-top:18px">
+            <label class="sett-label">Danger Zone</label>
+            <button class="sett-btn danger" id="clear-btn" style="width:100%">Clear All Admin Data &amp; Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Constants ──
+const OWNER = 'mv3d-ember', REPO = 'atom3d', STATUS_FILE = 'status.json';
+const K_PW    = 'a3d_pw';
+const K_TOKEN = 'a3d_token';
+const K_MAINT = 'a3d_maint';
+const K_MTIME = 'a3d_mtime';
+const K_BANS  = 'a3d_bans';
+const K_LOG   = 'a3d_log';
+
+// ── Crypto ──
+async function sha256(s){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Auth ──
+async function login(){
+  const pw = document.getElementById('pw').value;
+  if(!pw){setLoginErr('Enter your password');return}
+  const h = await sha256(pw);
+  const stored = localStorage.getItem(K_PW) || await sha256('atom3d');
+  if(h === stored){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'flex';
+    init();
+  } else {
+    setLoginErr('Wrong password');
+    document.getElementById('pw').value = '';
+    document.getElementById('pw').focus();
+  }
+}
+
+function setLoginErr(m){
+  document.getElementById('login-err').textContent = m;
+  setTimeout(()=>document.getElementById('login-err').textContent='', 3000);
+}
+
+function logout(){
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw').value = '';
+}
+
+// ── Init ──
+function init(){
+  // Maintenance state
+  const maint = localStorage.getItem(K_MAINT) === 'true';
+  applyMaintenanceUI(maint);
+
+  // Bans
+  renderBans();
+  document.getElementById('s-banned').textContent = getBans().length;
+
+  // Token
+  const tok = localStorage.getItem(K_TOKEN);
+  if(tok) document.getElementById('gh-token').value = tok;
+
+  // Log
+  renderLog();
+
+  // Stats
+  loadStats();
+}
+
+// ── Maintenance ──
+function applyMaintenanceUI(on){
+  const dot  = document.getElementById('sdot');
+  const name = document.getElementById('sname');
+  const sub  = document.getElementById('ssub');
+  const btn  = document.getElementById('maint-btn');
+  const badge= document.getElementById('hdr-badge');
+  const ts   = document.getElementById('sts');
+
+  if(on){
+    dot.className = 'status-dot maint';
+    name.textContent = 'Maintenance Mode';
+    name.style.color = '#ffaa44';
+    sub.textContent = 'Site is showing maintenance page';
+    btn.className = 'maint-btn go-live';
+    btn.textContent = 'Disable Maintenance Mode';
+    badge.className = 'hdr-badge maint';
+    badge.textContent = '⚠ MAINTENANCE';
+  } else {
+    dot.className = 'status-dot live';
+    name.textContent = 'Online';
+    name.style.color = '';
+    sub.textContent = 'atom3d.org is live';
+    btn.className = 'maint-btn go-maint';
+    btn.textContent = 'Enable Maintenance Mode';
+    badge.className = 'hdr-badge live';
+    badge.textContent = '● LIVE';
+  }
+
+  const t = localStorage.getItem(K_MTIME);
+  ts.textContent = t ? 'Last changed: ' + new Date(t).toLocaleString() : 'Last changed: never';
+}
+
+async function toggleMaintenance(){
+  const btn = document.getElementById('maint-btn');
+  const current = localStorage.getItem(K_MAINT) === 'true';
+  const next = !current;
+
+  btn.disabled = true;
+  btn.textContent = next ? 'Enabling…' : 'Disabling…';
+
+  const token = localStorage.getItem(K_TOKEN);
+  if(token){
+    const ok = await pushStatus(token, next);
+    if(!ok){ btn.disabled = false; applyMaintenanceUI(current); return; }
+  } else {
+    toast('No GitHub token — status saved locally only', 'err');
+  }
+
+  localStorage.setItem(K_MAINT, String(next));
+  localStorage.setItem(K_MTIME, new Date().toISOString());
+  applyMaintenanceUI(next);
+  btn.disabled = false;
+
+  addLog(next ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
+  toast(next ? 'Maintenance mode ON — site shows maintenance page' : 'Maintenance OFF — site is live', next ? 'err' : 'ok');
+}
+
+async function pushStatus(token, maintenance){
+  try{
+    const hdrs = {
+      'Authorization': 'token ' + token,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json'
+    };
+    const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${STATUS_FILE}`;
+
+    let sha = null;
+    const cur = await fetch(url, {headers: hdrs});
+    if(cur.ok){ const d = await cur.json(); sha = d.sha; }
+
+    const payload = {maintenance, banlist: getBans().map(b=>b.ip)};
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+    const body = {
+      message: maintenance ? 'chore: enable maintenance mode' : 'chore: disable maintenance mode',
+      content,
+      ...(sha && {sha})
+    };
+
+    const res = await fetch(url, {method:'PUT', headers:hdrs, body:JSON.stringify(body)});
+    if(!res.ok){
+      const e = await res.json();
+      toast('GitHub API: ' + (e.message||'error'), 'err');
+      return false;
+    }
+    return true;
+  } catch(e){
+    toast('Error: ' + e.message, 'err');
+    return false;
+  }
+}
+
+// ── IP Banning ──
+function getBans(){
+  try{ return JSON.parse(localStorage.getItem(K_BANS)||'[]'); }
+  catch{ return []; }
+}
+
+function addIP(){
+  const ipEl  = document.getElementById('ip-inp');
+  const rsnEl = document.getElementById('ip-rsn');
+  const ip    = ipEl.value.trim();
+  const rsn   = rsnEl.value.trim();
+
+  if(!ip){ toast('Enter an IP address', 'err'); return; }
+  if(!validIP(ip)){ toast('Invalid IP format', 'err'); return; }
+
+  const bans = getBans();
+  if(bans.find(b => b.ip === ip)){ toast('Already blocked', 'err'); return; }
+
+  bans.push({ip, rsn, date: new Date().toISOString()});
+  localStorage.setItem(K_BANS, JSON.stringify(bans));
+  ipEl.value = ''; rsnEl.value = '';
+  renderBans();
+  document.getElementById('s-banned').textContent = bans.length;
+  addLog('Blocked IP: ' + ip + (rsn ? ' (' + rsn + ')' : ''));
+  toast('Blocked ' + ip, 'ok');
+}
+
+function unbanIP(ip){
+  const bans = getBans().filter(b => b.ip !== ip);
+  localStorage.setItem(K_BANS, JSON.stringify(bans));
+  renderBans();
+  document.getElementById('s-banned').textContent = bans.length;
+  addLog('Unblocked IP: ' + ip);
+  toast('Unblocked ' + ip, 'ok');
+}
+
+function validIP(ip){
+  return /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(ip) ||
+         /^[0-9a-fA-F:]{2,39}$/.test(ip);
+}
+
+function renderBans(){
+  const bans = getBans();
+  const el = document.getElementById('ip-list');
+  if(!bans.length){ el.innerHTML = '<div class="ip-empty">No blocked IPs</div>'; return; }
+  el.innerHTML = bans.map(b =>
+    `<div class="ip-entry">
+      <div style="flex:1">
+        <div class="ip-addr">${esc(b.ip)}</div>
+        ${b.rsn ? `<span class="ip-rsn">${esc(b.rsn)}</span>` : ''}
+      </div>
+      <button class="unban-btn" onclick="unbanIP('${esc(b.ip)}')">Unblock</button>
+    </div>`
+  ).join('');
+}
+
+// ── Stats ──
+async function loadStats(){
+  // Basic repo info (no auth needed)
+  try{
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}`);
+    if(r.ok){
+      const d = await r.json();
+      document.getElementById('s-stars').textContent = d.stargazers_count ?? '—';
+      document.getElementById('s-deploy').textContent = d.pushed_at ? ago(new Date(d.pushed_at)) : '—';
+    }
+  } catch{}
+
+  // Commit count (needs token for reliable pagination; works without for small repos)
+  try{
+    const token = localStorage.getItem(K_TOKEN);
+    const hdrs = token ? {'Authorization':'token '+token} : {};
+    const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=1`, {headers:hdrs});
+    if(r.ok){
+      const link = r.headers.get('Link') || '';
+      const m = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+      if(m) document.getElementById('s-commits').textContent = m[1];
+      else document.getElementById('s-commits').textContent = '< 30';
+    }
+  } catch{}
+}
+
+function ago(d){
+  const s = Math.floor((Date.now()-d)/1000);
+  if(s<60) return s+'s ago';
+  if(s<3600) return Math.floor(s/60)+'m ago';
+  if(s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+// ── Log ──
+function getLog(){ try{ return JSON.parse(localStorage.getItem(K_LOG)||'[]'); } catch{ return []; } }
+function addLog(msg){
+  const log = getLog();
+  log.unshift({msg, t: new Date().toISOString()});
+  if(log.length > 60) log.pop();
+  localStorage.setItem(K_LOG, JSON.stringify(log));
+  renderLog();
+}
+function renderLog(){
+  const log = getLog();
+  const el = document.getElementById('log-list');
+  if(!log.length){ el.innerHTML = '<div class="log-empty">No activity yet</div>'; return; }
+  el.innerHTML = log.slice(0,25).map(l =>
+    `<div class="log-entry">
+      <div class="log-msg">${esc(l.msg)}</div>
+      <div class="log-t">${new Date(l.t).toLocaleTimeString()}</div>
+    </div>`
+  ).join('');
+}
+
+// ── Settings ──
+function saveToken(){
+  const v = document.getElementById('gh-token').value.trim();
+  if(!v){ toast('Enter a token', 'err'); return; }
+  localStorage.setItem(K_TOKEN, v);
+  addLog('GitHub token saved');
+  toast('Token saved', 'ok');
+}
+
+async function changePw(){
+  const v = document.getElementById('new-pw').value;
+  if(!v || v.length < 6){ toast('Min 6 characters', 'err'); return; }
+  localStorage.setItem(K_PW, await sha256(v));
+  document.getElementById('new-pw').value = '';
+  addLog('Admin password changed');
+  toast('Password updated', 'ok');
+}
+
+function clearAll(){
+  if(!confirm('Delete all admin data (token, password, bans, log) and log out?')) return;
+  [K_PW, K_TOKEN, K_MAINT, K_MTIME, K_BANS, K_LOG].forEach(k => localStorage.removeItem(k));
+  logout();
+}
+
+// ── Toast ──
+let _tt;
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(_tt);
+  _tt = setTimeout(()=> el.className = '', 3200);
+}
+
+// ── Utils ──
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Wire Events ──
+document.getElementById('login-btn').addEventListener('click', login);
+document.getElementById('pw').addEventListener('keydown', e => e.key==='Enter' && login());
+document.getElementById('logout-btn').addEventListener('click', logout);
+document.getElementById('maint-btn').addEventListener('click', toggleMaintenance);
+document.getElementById('add-ip-btn').addEventListener('click', addIP);
+document.getElementById('ip-inp').addEventListener('keydown', e => e.key==='Enter' && addIP());
+document.getElementById('save-token-btn').addEventListener('click', saveToken);
+document.getElementById('change-pw-btn').addEventListener('click', changePw);
+document.getElementById('clear-btn').addEventListener('click', clearAll);
+document.getElementById('refresh-btn').addEventListener('click', ()=>{
+  ['s-stars','s-deploy','s-commits'].forEach(id => document.getElementById(id).textContent = '…');
+  loadStats();
+  toast('Stats refreshed');
+});
+</script>
+</body>
+</html>

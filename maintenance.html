@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atom3D — Under Maintenance</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#060613;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.card{position:relative;z-index:1;text-align:center;background:rgba(10,10,30,.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:52px 60px;max-width:480px;width:90%;box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.atom-icon{margin:0 auto 28px;width:72px;height:72px;animation:spin 8s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+h1{font-size:1.9rem;font-weight:700;color:#fff;margin-bottom:10px;letter-spacing:-.01em}
+.sub{font-size:1rem;opacity:.45;margin-bottom:30px;line-height:1.6}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:8px 22px;border-radius:50px;background:rgba(255,150,30,.12);border:1px solid rgba(255,150,30,.3);color:#ffaa44;font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.dot{width:7px;height:7px;border-radius:50%;background:#ffaa44;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.footer{margin-top:36px;font-size:.73rem;opacity:.25;letter-spacing:.04em}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="card">
+  <svg class="atom-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="8" fill="#cc7722"/>
+    <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="#ff9944" stroke-width="1.5" opacity=".7"/>
+    <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="#9a4e18" stroke-width="1.2" transform="rotate(60 50 50)" opacity=".6"/>
+    <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="#c07030" stroke-width="1.2" transform="rotate(120 50 50)" opacity=".6"/>
+    <circle cx="88" cy="50" r="3.5" fill="#ffdd99"/>
+    <circle cx="69" cy="80.4" r="3.5" fill="#ffdd99" transform="rotate(60 50 50) translate(0 0)"/>
+  </svg>
+  <h1>Under Maintenance</h1>
+  <p class="sub">Atom3D is temporarily offline for updates.<br>We'll be back shortly.</p>
+  <div class="pill"><div class="dot"></div>Work in Progress</div>
+  <div class="footer">ATOM3D.ORG &nbsp;·&nbsp; Please check back soon</div>
+</div>
+<script>
+const c=document.getElementById('bg'),ctx=c.getContext('2d');
+let W,H,pts=[];
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight;pts=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5}))}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(180,120,50,.35)';ctx.fill();
+  });
+  requestAnimationFrame(draw);
+}
+resize();draw();
+window.addEventListener('resize',resize);
+</script>
+</body>
+</html>
