@@ -256,28 +256,28 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
     <!-- THEMES -->
     <div class="card">
       <div class="card-label">Seasonal Themes</div>
-      <div class="theme-grid">
-        <button class="theme-btn" data-theme="" onclick="setTheme('')">
+      <div class="theme-grid" id="theme-grid">
+        <button class="theme-btn" data-theme="">
           <span class="theme-icon">✕</span>
           <span class="theme-name">None</span>
         </button>
-        <button class="theme-btn" data-theme="christmas" onclick="setTheme('christmas')">
+        <button class="theme-btn" data-theme="christmas">
           <span class="theme-icon">🎄</span>
           <span class="theme-name">Christmas</span>
         </button>
-        <button class="theme-btn" data-theme="halloween" onclick="setTheme('halloween')">
+        <button class="theme-btn" data-theme="halloween">
           <span class="theme-icon">🎃</span>
           <span class="theme-name">Halloween</span>
         </button>
-        <button class="theme-btn" data-theme="easter" onclick="setTheme('easter')">
+        <button class="theme-btn" data-theme="easter">
           <span class="theme-icon">🐣</span>
           <span class="theme-name">Easter</span>
         </button>
-        <button class="theme-btn" data-theme="newyear" onclick="setTheme('newyear')">
+        <button class="theme-btn" data-theme="newyear">
           <span class="theme-icon">🎆</span>
           <span class="theme-name">New Year</span>
         </button>
-        <button class="theme-btn" data-theme="valentine" onclick="setTheme('valentine')">
+        <button class="theme-btn" data-theme="valentine">
           <span class="theme-icon">💕</span>
           <span class="theme-name">Valentine</span>
         </button>
@@ -610,8 +610,9 @@ function unbanIP(ip){
 }
 
 function validIP(ip){
-  return /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/.test(ip) ||
-         /^[0-9a-fA-F:]{2,39}$/.test(ip);
+  const v4 = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})(\/(\d{1,2}))?$/.exec(ip);
+  if(v4) return [1,2,3,4].every(i => +v4[i] <= 255) && (!v4[6] || +v4[6] <= 32);
+  return /^[0-9a-fA-F:]{2,39}$/.test(ip) && ip.includes(':');
 }
 
 function renderBans(){
@@ -624,15 +625,17 @@ function renderBans(){
         <div class="ip-addr">${esc(b.ip)}</div>
         ${b.rsn ? `<span class="ip-rsn">${esc(b.rsn)}</span>` : ''}
       </div>
-      <button class="unban-btn" onclick="unbanIP('${esc(b.ip)}')">Unblock</button>
+      <button class="unban-btn" data-ip="${esc(b.ip)}">Unblock</button>
     </div>`
   ).join('');
 }
 
 // ── Themes ──
 const THEME_LABELS = {christmas:'Christmas 🎄',halloween:'Halloween 🎃',easter:'Easter 🐣',newyear:'New Year 🎆',valentine:"Valentine's 💕"};
+const VALID_THEMES = new Set(['', 'christmas', 'halloween', 'easter', 'newyear', 'valentine']);
 
 async function setTheme(name){
+  if(!VALID_THEMES.has(name)){ toast('Invalid theme', 'err'); return; }
   const btn = document.querySelector(`.theme-btn[data-theme="${name}"]`);
   if(btn) btn.style.opacity = '.5';
 
@@ -825,6 +828,10 @@ document.getElementById('logout-btn').addEventListener('click', logout);
 document.getElementById('maint-btn').addEventListener('click', toggleMaintenance);
 document.getElementById('add-ip-btn').addEventListener('click', addIP);
 document.getElementById('ip-inp').addEventListener('keydown', e => e.key==='Enter' && addIP());
+document.getElementById('ip-list').addEventListener('click', e => {
+  const btn = e.target.closest('.unban-btn');
+  if(btn && btn.dataset.ip) unbanIP(btn.dataset.ip);
+});
 document.getElementById('save-token-btn').addEventListener('click', saveToken);
 document.getElementById('change-pw-btn').addEventListener('click', changePw);
 document.getElementById('clear-btn').addEventListener('click', clearAll);
@@ -836,6 +843,10 @@ document.getElementById('refresh-btn').addEventListener('click', ()=>{
 document.getElementById('save-gc-btn').addEventListener('click', saveGC);
 document.getElementById('save-jb-btn').addEventListener('click', saveJB);
 document.getElementById('activate-jb-btn').addEventListener('click', activateInstantUpdates);
+document.getElementById('theme-grid').addEventListener('click', e => {
+  const btn = e.target.closest('.theme-btn[data-theme]');
+  if(btn) setTheme(btn.dataset.theme);
+});
 </script>
 </body>
 </html>
