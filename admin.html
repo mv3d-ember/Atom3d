@@ -583,7 +583,7 @@ async function activateInstantUpdates(){
     let sha=null;
     const cur=await fetch(apiUrl,{headers:hdrs});
     if(cur.ok){const d=await cur.json();sha=d.sha;}
-    const body={message:'chore: activate instant updates via JSONbin',content:btoa(JSON.stringify({url:`https://api.jsonbin.io/v3/b/${jbId}/latest`})),...(sha&&{sha})};
+    const body={message:'chore: activate instant updates via JSONbin',content:btoa(JSON.stringify({url:`https://api.jsonbin.io/v3/b/${jbId}/latest`,key:jbKey})),...(sha&&{sha})};
     const res=await fetch(apiUrl,{method:'PUT',headers:hdrs,body:JSON.stringify(body)});
     if(!res.ok){const e=await res.json();toast('GitHub: '+(e.message||'failed'),'err');btn.disabled=false;btn.textContent='Activate Instant Updates';return;}
     btn.textContent='✓ Activated — deploying (~2 min)';
