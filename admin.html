@@ -511,26 +511,7 @@ async function toggleMaintenance(){
 
 async function pushStatus(token, maintenance){
   const payload = {maintenance, banlist: getBans().map(b=>b.ip), theme: localStorage.getItem(K_THEME)||null};
-  const jbId  = localStorage.getItem(K_JB_ID);
-  const jbKey = localStorage.getItem(K_JB_KEY);
-
-  // ── JSONbin: instant ──
-  if(jbId && jbKey){
-    try{
-      const r = await fetch(`https://api.jsonbin.io/v3/b/${jbId}`, {
-        method:'PUT',
-        headers:{'Content-Type':'application/json','X-Master-Key':jbKey},
-        body:JSON.stringify(payload)
-      });
-      if(r.ok) return true;
-      const e = await r.json();
-      toast('JSONbin: '+(e.message||'error'),'err');
-      return false;
-    }catch(e){ toast('JSONbin error: '+e.message,'err'); return false; }
-  }
-
-  // ── GitHub fallback: slow (~10 min via Pages CDN) ──
-  if(!token){ toast('Add JSONbin or a GitHub token in Settings','err'); return false; }
+  if(!token){ toast('Add a GitHub token in Settings','err'); return false; }
   try{
     const hdrs={'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
     const url=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${STATUS_FILE}`;
@@ -540,16 +521,11 @@ async function pushStatus(token, maintenance){
     const body={message:maintenance?'chore: enable maintenance mode':'chore: disable maintenance mode',content:btoa(unescape(encodeURIComponent(JSON.stringify(payload,null,2)))),...(sha&&{sha})};
     const res=await fetch(url,{method:'PUT',headers:hdrs,body:JSON.stringify(body)});
     if(!res.ok){const e=await res.json();toast('GitHub: '+(e.message||'error'),'err');return false;}
-    toast('Pushed — may take ~10 min (set up JSONbin in Settings for instant updates)','');
     return true;
   }catch(e){toast('Error: '+e.message,'err');return false;}
 }
 
-function updateSpeedBadge(){
-  const badge = document.getElementById('speed-badge');
-  const fast = localStorage.getItem(K_JB_ID) && localStorage.getItem(K_JB_KEY);
-  badge.style.display = fast ? 'none' : 'inline-flex';
-}
+function updateSpeedBadge(){ document.getElementById('speed-badge').style.display='none'; }
 
 function saveJB(){
   const id  = document.getElementById('jb-id').value.trim();
