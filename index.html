@@ -678,6 +678,12 @@ function buildAtom(el){
   const nLight=new THREE.PointLight(col,2.5,50);
   atomGroup.add(nLight);
 
+  // Themed electron & ring colors
+  const _thm=document.documentElement.dataset.theme||'';
+  const _ET={christmas:{ec:0xff4422,ee:0xff2200,rc:0x22aa44},halloween:{ec:0xff6600,ee:0xff4400,rc:0xaa22dd},easter:{ec:0xff88cc,ee:0xff66bb,rc:0x77eeff},newyear:{ec:0xffcc00,ee:0xffaa00,rc:0xdddddd},valentine:{ec:0xff3366,ee:0xff1155,rc:0xff88bb}}[_thm];
+  const _eMat=_ET?{color:_ET.ec,emissive:_ET.ee}:{color:0xffffff,emissive:0xaaccff};
+  const _ringC=_ET?new THREE.Color(_ET.rc):tc;
+
   el.shells.forEach((count,idx)=>{
     const shellR=nr+2.6+idx*2.9;
     const tilt=TILTS[idx%TILTS.length];
@@ -689,7 +695,7 @@ function buildAtom(el){
     // Ring (torus)
     sg.add(new THREE.Mesh(
       new THREE.TorusGeometry(shellR,0.07,8,100),
-      new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.25,transparent:true,opacity:0.55})
+      new THREE.MeshPhongMaterial({color:_ringC,emissive:_ringC,emissiveIntensity:0.25,transparent:true,opacity:0.55})
     ));
 
     // Electron orbit group (spins around local Z = normal of ring plane)
@@ -701,7 +707,7 @@ function buildAtom(el){
       const a=(e/count)*Math.PI*2;
       const em=new THREE.Mesh(
         new THREE.SphereGeometry(0.22,12,12),
-        new THREE.MeshPhongMaterial({color:0xffffff,emissive:0xaaccff,emissiveIntensity:0.9,shininess:200})
+        new THREE.MeshPhongMaterial({color:_eMat.color,emissive:_eMat.emissive,emissiveIntensity:0.9,shininess:200})
       );
       em.position.set(shellR*Math.cos(a), shellR*Math.sin(a), 0);
       orbit.add(em);
@@ -2354,8 +2360,8 @@ var CSS={
 function mkC(){var c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:997;';document.body.appendChild(c);return c}
 
 function christmas(c){var ctx=c.getContext('2d'),W,H,f=[];
-  function rsz(){W=c.width=innerWidth;H=c.height=innerHeight;f=Array.from({length:110},function(){return{x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.2+.4,s:Math.random()*.75+.2,d:Math.random()*.35-.17,o:Math.random()*.5+.15}})}
-  function draw(){ctx.clearRect(0,0,W,H);f.forEach(function(p){p.y+=p.s;p.x+=p.d;if(p.y>H+4){p.y=-4;p.x=Math.random()*W}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fillStyle='rgba(255,255,255,'+p.o+')';ctx.fill()});requestAnimationFrame(draw)}
+  function rsz(){W=c.width=innerWidth;H=c.height=innerHeight;f=Array.from({length:110},function(){return{x:Math.random()*W,y:Math.random()*H,r:Math.random()*2.2+.4,s:Math.random()*.75+.2,d:Math.random()*.35-.17,ph:Math.random()*6.28,o:Math.random()*.5+.15}})}
+  function draw(){ctx.clearRect(0,0,W,H);f.forEach(function(p){p.y+=p.s;p.x+=p.d+Math.sin(p.y*0.013+p.ph)*0.45;if(p.y>H+4){p.y=-4;p.x=Math.random()*W}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fillStyle='rgba(255,255,255,'+p.o+')';ctx.fill()});requestAnimationFrame(draw)}
   rsz();draw();window.addEventListener('resize',rsz)}
 
 function halloween(c){var ctx=c.getContext('2d'),W,H;
@@ -2389,11 +2395,12 @@ function easter(c){var ctx=c.getContext('2d'),W,H;
   rsz();draw();window.addEventListener('resize',rsz)}
 
 function newyear(c){var ctx=c.getContext('2d'),W,H;
-  var g='255,200,0',s='215,215,215';
+  var g='255,200,0',si='215,215,215';
   function rsz(){W=c.width=innerWidth;H=c.height=innerHeight}
-  var sps=Array.from({length:60},function(){return{x:Math.random()*(innerWidth||800),y:Math.random()*(innerHeight||600),life:Math.random(),dec:Math.random()*.011+.004,sz:Math.random()*3.2+.8,col:Math.random()>.5?g:s}});
+  function mkS(){return{x:Math.random()*(W||innerWidth),y:Math.random()*(H||innerHeight),vx:(Math.random()-.5)*.28,vy:(Math.random()-.5)*.28,life:Math.random(),dec:Math.random()*.009+.003,sz:Math.random()*3.2+.8,col:Math.random()>.5?g:si}}
+  var sps=Array.from({length:65},mkS);
   function star(x,y,sz,op,col){ctx.save();ctx.translate(x,y);ctx.globalAlpha=op;ctx.fillStyle='rgb('+col+')';for(var i=0;i<4;i++){ctx.save();ctx.rotate(i*1.5708);ctx.beginPath();ctx.ellipse(0,-sz,sz*.11,sz,0,0,6.28);ctx.fill();ctx.restore()}ctx.restore()}
-  function draw(){ctx.clearRect(0,0,W,H);sps.forEach(function(s){s.life-=s.dec;if(s.life<=0)Object.assign(s,{x:Math.random()*W,y:Math.random()*H,life:1,dec:Math.random()*.011+.004,sz:Math.random()*3.2+.8,col:Math.random()>.5?g:'215,215,215'});star(s.x,s.y,s.sz,Math.max(0,s.life),s.col)});requestAnimationFrame(draw)}
+  function draw(){ctx.clearRect(0,0,W,H);sps.forEach(function(p){p.life-=p.dec;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;if(p.life<=0)Object.assign(p,mkS());star(p.x,p.y,p.sz,Math.max(0,p.life),p.col)});requestAnimationFrame(draw)}
   rsz();draw();window.addEventListener('resize',rsz)}
 
 function valentine(c){var ctx=c.getContext('2d'),W,H;
@@ -2410,6 +2417,8 @@ window.__applyTheme=function(name){
   if(!FNS[name])return;
   if(CSS[name]){var s=document.createElement('style');s.textContent=CSS[name];document.head.appendChild(s)}
   var c=mkC();FNS[name](c);
+  // Re-render atom with themed electron/ring colors
+  if(typeof buildAtom==='function'&&typeof currentEl!='undefined'&&currentEl)buildAtom(currentEl);
 };
 if(window.__pendingTheme)window.__applyTheme(window.__pendingTheme);
 })();
