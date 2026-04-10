@@ -646,7 +646,7 @@ window.addEventListener('resize',()=>{
 });
 
 // ── Atom State ────────────────────────────────────────────────────────────────
-let atomGroup=null, electronOrbits=[], currentEl=null;
+let atomGroup=null, electronOrbits=[], currentEl=null, specialMeshes=new Map();
 
 // Each shell gets a distinct 3D tilt so the model looks fully 3D
 const TILTS=[
@@ -659,9 +659,29 @@ const TILTS=[
   [Math.PI*0.6,Math.PI*0.2,Math.PI*0.4],
 ];
 
+// ── Hidden Easter Eggs ────────────────────────────────────────────────────────
+const SPECIAL_ELECTRONS={
+  Cu:{
+    easter:   {emoji:'🥚', msg:'hey you found me!!!'},
+    christmas:{emoji:'🎄', msg:'Ho ho ho! You found the hidden tree! 🎅'},
+    halloween:{emoji:'🎃', msg:'BOO! You found the spooky electron! 👻'},
+    newyear:  {emoji:'✨', msg:'Happy New Year! You found the lucky electron! 🎆'},
+    valentine:{emoji:'💖', msg:'You found the love electron! 💕'}
+  }
+};
+function makeEmojiSprite(emoji){
+  const cv=document.createElement('canvas');cv.width=128;cv.height=128;
+  const cx=cv.getContext('2d');cx.font='76px serif';cx.textAlign='center';cx.textBaseline='middle';
+  cx.fillText(emoji,64,68);
+  const tex=new THREE.CanvasTexture(cv);
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,sizeAttenuation:true}));
+  spr.scale.set(1.0,1.0,1);
+  return spr;
+}
+
 function buildAtom(el){
   if(atomGroup) scene.remove(atomGroup);
-  electronOrbits=[];
+  electronOrbits=[]; specialMeshes.clear();
   atomGroup=new THREE.Group();
   scene.add(atomGroup);
 
@@ -705,10 +725,18 @@ function buildAtom(el){
 
     for(let e=0;e<count;e++){
       const a=(e/count)*Math.PI*2;
-      const em=new THREE.Mesh(
-        new THREE.SphereGeometry(0.22,12,12),
-        new THREE.MeshPhongMaterial({color:_eMat.color,emissive:_eMat.emissive,emissiveIntensity:0.9,shininess:200})
-      );
+      const specialDef=SPECIAL_ELECTRONS[el.symbol]&&_thm&&idx===el.shells.length-1&&e===0
+        ? SPECIAL_ELECTRONS[el.symbol][_thm] : null;
+      let em;
+      if(specialDef){
+        em=makeEmojiSprite(specialDef.emoji);
+        specialMeshes.set(em,{msg:specialDef.msg});
+      } else {
+        em=new THREE.Mesh(
+          new THREE.SphereGeometry(0.22,12,12),
+          new THREE.MeshPhongMaterial({color:_eMat.color,emissive:_eMat.emissive,emissiveIntensity:0.9,shininess:200})
+        );
+      }
       em.position.set(shellR*Math.cos(a), shellR*Math.sin(a), 0);
       orbit.add(em);
     }
@@ -1303,6 +1331,32 @@ document.getElementById('btn-toggle').addEventListener('click',()=>{
   controls.update();
   renderer.render(scene,camera);
 })();
+
+// ── Hidden Electron Click Detection ───────────────────────────────────────────
+(function(){
+  const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
+  renderer.domElement.addEventListener('click',function(e){
+    if(!specialMeshes.size)return;
+    const rect=renderer.domElement.getBoundingClientRect();
+    mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+    mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+    ray.setFromCamera(mouse,camera);
+    const targets=[];specialMeshes.forEach(function(_,m){targets.push(m)});
+    const hits=ray.intersectObjects(targets,false);
+    if(hits.length){const d=specialMeshes.get(hits[0].object);if(d)showHiddenMsg(d.msg);}
+  });
+})();
+
+function showHiddenMsg(msg){
+  let pop=document.getElementById('_egg_pop');
+  if(!pop){
+    pop=document.createElement('div');pop.id='_egg_pop';
+    pop.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-60%);background:rgba(8,6,22,.97);border:1px solid rgba(255,220,100,.4);border-radius:18px;padding:20px 36px;font-size:1.22rem;font-weight:600;color:#fff;z-index:9999;text-align:center;pointer-events:none;opacity:0;transition:opacity .32s,transform .32s;box-shadow:0 20px 60px rgba(0,0,0,.9);font-family:"Segoe UI",system-ui,sans-serif;white-space:nowrap';
+    document.body.appendChild(pop);
+  }
+  pop.textContent=msg;pop.style.opacity='1';pop.style.transform='translate(-50%,-50%)';
+  clearTimeout(pop._t);pop._t=setTimeout(function(){pop.style.opacity='0';pop.style.transform='translate(-50%,-60%)'},3000);
+}
 
 // Default on load
 setTimeout(()=>{ inp.value='Carbon'; generate(); },200);
