@@ -701,8 +701,9 @@ function buildAtom(el){
   // Themed electron & ring colors
   const _thm=document.documentElement.dataset.theme||'';
   const _ET={christmas:{ec:0xff4422,ee:0xff2200,rc:0x22aa44},halloween:{ec:0xff6600,ee:0xff4400,rc:0xaa22dd},easter:{ec:0xff88cc,ee:0xff66bb,rc:0x77eeff},newyear:{ec:0xffcc00,ee:0xffaa00,rc:0xdddddd},valentine:{ec:0xff3366,ee:0xff1155,rc:0xff88bb}}[_thm];
-  const _eMat=_ET?{color:_ET.ec,emissive:_ET.ee}:{color:0xffffff,emissive:0xaaccff};
-  const _ringC=_ET?new THREE.Color(_ET.rc):tc;
+  let _eMat=_ET?{color:_ET.ec,emissive:_ET.ee}:{color:0xffffff,emissive:0xaaccff};
+  let _ringC=_ET?new THREE.Color(_ET.rc):tc;
+  if(document.documentElement.dataset.ownerView){_eMat={color:0xcc88ff,emissive:0xaa66ff};_ringC=new THREE.Color(0x9955cc);}
 
   el.shells.forEach((count,idx)=>{
     const shellR=nr+2.6+idx*2.9;
@@ -2475,6 +2476,48 @@ window.__applyTheme=function(name){
   if(typeof buildAtom==='function'&&typeof currentEl!='undefined'&&currentEl)buildAtom(currentEl);
 };
 if(window.__pendingTheme)window.__applyTheme(window.__pendingTheme);
+})();
+</script>
+<script>
+// ── Owner View ────────────────────────────────────────────────────────────────
+(function(){
+var OWNER_IP='99.148.20.46';
+function activateOwnerView(){
+  document.documentElement.dataset.ownerView='true';
+  // Lavender CSS
+  var s=document.createElement('style');
+  s.textContent='body{background:#080512!important}header{background:rgba(110,70,180,.2)!important;border-bottom-color:rgba(190,140,255,.38)!important}'+
+    '#owner-badge{padding:5px 18px;background:rgba(160,100,255,.15);border:1px solid rgba(200,150,255,.32);border-radius:20px;color:#cc99ff;font-size:.77rem;font-weight:700;letter-spacing:.07em;flex-shrink:0;animation:ownrgl 2.6s ease-in-out infinite}'+
+    '@keyframes ownrgl{0%,100%{box-shadow:0 0 8px rgba(170,100,255,.2)}50%{box-shadow:0 0 22px rgba(180,110,255,.55)}}';
+  document.head.appendChild(s);
+  // Badge in header
+  var badge=document.createElement('span');
+  badge.id='owner-badge';badge.textContent='👑 Owner View';
+  var hdr=document.querySelector('header');
+  if(hdr)hdr.appendChild(badge);
+  // Lavender floating particles
+  var c=document.createElement('canvas');
+  c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:996;';
+  document.body.appendChild(c);
+  (function lavPts(){
+    var ctx=c.getContext('2d'),W,H;
+    function rsz(){W=c.width=innerWidth;H=c.height=innerHeight}
+    function mkP(){return{x:Math.random()*(W||innerWidth),y:Math.random()*(H||innerHeight),r:Math.random()*2.2+.5,vx:(Math.random()-.5)*.22,vy:-(Math.random()*.38+.1),op:Math.random()*.35+.1,ph:Math.random()*6.28}}
+    var pts=Array.from({length:55},mkP);
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      pts.forEach(function(p){p.x+=p.vx+Math.sin(p.ph)*0.3;p.y+=p.vy;p.ph+=0.018;if(p.y<-6)Object.assign(p,mkP(),{y:H+6});ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,6.28);ctx.fillStyle='rgba(185,135,255,'+p.op+')';ctx.fill()});
+      requestAnimationFrame(draw);
+    }
+    rsz();draw();window.addEventListener('resize',rsz);
+  })();
+  // Rebuild atom with lavender electrons if one is already showing
+  if(typeof buildAtom==='function'&&typeof currentEl!='undefined'&&currentEl)buildAtom(currentEl);
+}
+fetch('https://api.ipify.org?format=json')
+  .then(function(r){return r.json()})
+  .then(function(d){if(d&&d.ip===OWNER_IP)activateOwnerView()})
+  .catch(function(){});
 })();
 </script>
 </body>
