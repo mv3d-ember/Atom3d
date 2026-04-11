@@ -2520,6 +2520,58 @@ fetch('https://api.ipify.org?format=json')
   .catch(function(){});
 })();
 </script>
+<script>
+// ── Visitor Tracking ──────────────────────────────────────────────────────────
+(function(){
+  if(document.documentElement.dataset.ownerView) return; // skip owner
+  var sbUrl=localStorage.getItem('ov_sb_url');
+  var sbKey=localStorage.getItem('ov_sb_key');
+  if(!sbUrl||!sbKey) return;
+  function br(ua){
+    if(/Edg\//.test(ua))return'Edge';
+    if(/OPR\//.test(ua))return'Opera';
+    if(/Chrome\/([\d]+)/.test(ua)&&!/Chromium/.test(ua)){var m=ua.match(/Chrome\/([\d]+)/);return'Chrome '+(m?m[1]:'');}
+    if(/Firefox\/([\d]+)/.test(ua)){var m=ua.match(/Firefox\/([\d]+)/);return'Firefox '+(m?m[1]:'');}
+    if(/Safari\//.test(ua)&&!/Chrome/.test(ua))return'Safari';
+    return'Other';
+  }
+  function os(ua){
+    if(/Windows NT 10/.test(ua))return'Windows 10/11';
+    if(/Windows NT/.test(ua))return'Windows';
+    if(/iPhone/.test(ua))return'iOS';
+    if(/iPad/.test(ua))return'iPadOS';
+    if(/Mac OS X/.test(ua))return'macOS';
+    if(/Android/.test(ua))return'Android';
+    if(/Linux/.test(ua))return'Linux';
+    return'Unknown';
+  }
+  function dev(ua){
+    if(/Mobi|Android.*Mobile|iPhone/.test(ua))return'Mobile';
+    if(/Tablet|iPad|Android(?!.*Mobile)/.test(ua))return'Tablet';
+    return'Desktop';
+  }
+  var ua=navigator.userAgent;
+  fetch('https://ipapi.co/json/')
+    .then(function(r){return r.json()})
+    .then(function(g){
+      fetch(sbUrl+'/rest/v1/visitors',{
+        method:'POST',
+        headers:{'apikey':sbKey,'Authorization':'Bearer '+sbKey,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({
+          ip:g.ip,city:g.city||null,region:g.region||null,country:g.country_name||null,isp:g.org||null,
+          browser:br(ua),os:os(ua),device:dev(ua),
+          screen:screen.width+'x'+screen.height,
+          viewport:window.innerWidth+'x'+window.innerHeight,
+          lang:navigator.language||null,
+          tz:Intl.DateTimeFormat().resolvedOptions().timeZone||null,
+          referrer:document.referrer||null,
+          page:location.pathname
+        })
+      });
+    })
+    .catch(function(){});
+})();
+</script>
 </body>
 </html>
 

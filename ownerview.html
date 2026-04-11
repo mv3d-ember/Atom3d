@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Atom3D — Owner Analytics</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#080512;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+
+/* ── Login ── */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 40%,#130828 0%,#080512 70%)}
+.login-box{background:#0e0a1f;border:1px solid rgba(180,130,255,.2);border-radius:20px;padding:44px 38px;width:100%;max-width:360px;box-shadow:0 24px 70px rgba(0,0,0,.8)}
+.login-logo{text-align:center;margin-bottom:32px}
+.login-logo h1{font-size:1.6rem;font-weight:700;letter-spacing:-.01em;color:#cc99ff}
+.login-logo p{font-size:.72rem;opacity:.3;margin-top:5px;letter-spacing:.12em;text-transform:uppercase}
+.login-label{font-size:.72rem;opacity:.4;text-transform:uppercase;letter-spacing:.09em;margin-bottom:8px;display:block}
+.login-input{width:100%;padding:12px 15px;background:rgba(180,130,255,.07);border:1px solid rgba(180,130,255,.2);border-radius:10px;color:#fff;font-size:.95rem;outline:none;transition:border-color .2s}
+.login-input:focus{border-color:#aa77ff}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#7744cc,#5522aa);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:600;cursor:pointer;margin-top:18px;transition:opacity .15s;letter-spacing:.02em}
+.login-btn:hover{opacity:.88}
+.login-err{color:#ff8888;font-size:.78rem;text-align:center;margin-top:10px;min-height:18px}
+
+/* ── Dashboard ── */
+#dashboard{display:none;flex-direction:column;min-height:100vh}
+.ov-hdr{padding:14px 24px;background:rgba(120,70,200,.14);border-bottom:1px solid rgba(180,130,255,.2);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.ov-hdr h1{font-size:1.05rem;font-weight:700;flex:1;color:#cc99ff}
+.hdr-ts{font-size:.72rem;opacity:.3;flex-shrink:0}
+.hdr-logout{padding:7px 14px;background:rgba(180,130,255,.08);border:1px solid rgba(180,130,255,.18);border-radius:8px;color:#aab;font-size:.78rem;cursor:pointer;transition:background .15s}
+.hdr-logout:hover{background:rgba(180,130,255,.18)}
+
+.grid{padding:22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;align-items:start}
+.wide{grid-column:1/-1}
+.card{background:#0e0a1f;border:1px solid rgba(180,130,255,.12);border-radius:16px;padding:22px 24px}
+.card-label{font-size:.68rem;opacity:.38;text-transform:uppercase;letter-spacing:.1em;margin-bottom:15px}
+
+/* ── KPIs ── */
+.kpi-row{display:flex;gap:12px;flex-wrap:wrap}
+.kpi{flex:1;min-width:90px;background:rgba(180,130,255,.07);border:1px solid rgba(180,130,255,.14);border-radius:11px;padding:15px 16px;text-align:center}
+.kpi-val{font-size:1.85rem;font-weight:700;color:#cc99ff;line-height:1}
+.kpi-lbl{font-size:.65rem;opacity:.38;text-transform:uppercase;letter-spacing:.08em;margin-top:5px}
+
+/* ── Info grid ── */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.info-box{background:rgba(180,130,255,.05);border-radius:9px;padding:11px 13px}
+.info-lbl{font-size:.64rem;opacity:.35;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.info-val{font-size:.88rem;font-weight:500;word-break:break-word}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;margin-top:8px}
+.vis-table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:640px}
+.vis-table th{text-align:left;padding:8px 10px;font-size:.64rem;opacity:.32;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid rgba(180,130,255,.14);font-weight:600;white-space:nowrap}
+.vis-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:top;max-width:200px}
+.vis-table tr:last-child td{border-bottom:none}
+.vis-table tr:hover td{background:rgba(180,130,255,.04)}
+.vis-ip{font-family:monospace;color:#bb99ff;font-size:.8rem}
+.vis-sub{opacity:.42;font-size:.72rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl-empty{text-align:center;padding:30px;opacity:.3;font-style:italic;font-size:.82rem}
+.filter-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.filter-inp{flex:1;min-width:150px;padding:7px 12px;background:rgba(180,130,255,.06);border:1px solid rgba(180,130,255,.14);border-radius:8px;color:#fff;font-size:.82rem;outline:none}
+.filter-inp:focus{border-color:#9966ee}
+.filter-inp::placeholder{color:rgba(255,255,255,.25)}
+
+/* ── Setup ── */
+.setup-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+@media(max-width:600px){.setup-cols{grid-template-columns:1fr}}
+.step{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.step-n{width:22px;height:22px;border-radius:50%;background:rgba(180,130,255,.18);border:1px solid rgba(180,130,255,.32);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#cc99ff;flex-shrink:0;margin-top:3px}
+.step-t{font-size:.8rem;opacity:.62;line-height:1.65}
+.step-t a{color:#bb99ff;text-decoration:none}.step-t a:hover{text-decoration:underline}
+.step-t strong{color:#dde;opacity:1}
+.sql-block{background:rgba(0,0,0,.4);border:1px solid rgba(180,130,255,.16);border-radius:9px;padding:13px 15px;font-family:monospace;font-size:.74rem;color:#cc99ff;white-space:pre;overflow-x:auto;margin:8px 0 14px}
+.sett-row{display:flex;gap:7px;margin-bottom:8px}
+.sett-inp{flex:1;padding:9px 13px;background:rgba(180,130,255,.06);border:1px solid rgba(180,130,255,.14);border-radius:9px;color:#fff;font-size:.85rem;outline:none}
+.sett-inp:focus{border-color:#9966ee}
+.sett-btn{padding:9px 16px;background:rgba(180,130,255,.1);border:1px solid rgba(180,130,255,.22);border-radius:9px;color:#cc99ff;font-size:.8rem;cursor:pointer;transition:background .15s;white-space:nowrap}
+.sett-btn:hover{background:rgba(180,130,255,.2)}
+.sett-note{font-size:.67rem;opacity:.24;margin-top:5px;line-height:1.5}
+.status-pill{display:inline-flex;align-items:center;gap:6px;padding:5px 13px;border-radius:20px;font-size:.73rem;font-weight:600;letter-spacing:.04em;margin-bottom:14px}
+.status-pill.ok{background:rgba(40,200,90,.1);border:1px solid rgba(40,200,90,.25);color:#44dd88}
+.status-pill.warn{background:rgba(255,170,30,.08);border:1px solid rgba(255,170,30,.22);color:#ffaa44}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* ── Refresh btn ── */
+.refresh-btn{margin-top:14px;width:100%;padding:9px;background:rgba(180,130,255,.07);border:1px solid rgba(180,130,255,.14);border-radius:9px;color:#ccd;font-size:.8rem;cursor:pointer;transition:background .15s}
+.refresh-btn:hover{background:rgba(180,130,255,.14)}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#0e0a1f;border:1px solid rgba(180,130,255,.22);border-radius:10px;padding:10px 22px;font-size:.82rem;color:#dde;opacity:0;transition:all .28s;z-index:9999;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{border-color:rgba(40,200,90,.35);color:#55ee99}
+#toast.err{border-color:rgba(255,70,70,.35);color:#ff9999}
+</style>
+</head>
+<body>
+
+<!-- ══ LOGIN ══ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div style="font-size:2.6rem;margin-bottom:12px">👑</div>
+      <h1>Owner View</h1>
+      <p>Atom3D Analytics</p>
+    </div>
+    <label class="login-label">Password</label>
+    <input type="password" id="pw" class="login-input" placeholder="Enter password" autocomplete="off">
+    <div id="login-err" class="login-err"></div>
+    <button class="login-btn" id="login-btn">Sign In</button>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div id="dashboard">
+  <header class="ov-hdr">
+    <h1>👑 Atom3D — Owner Analytics</h1>
+    <span class="hdr-ts" id="hdr-ts"></span>
+    <button class="hdr-logout" id="logout-btn">Logout</button>
+  </header>
+
+  <div class="grid">
+
+    <!-- KPIs -->
+    <div class="card wide">
+      <div class="card-label">Overview</div>
+      <div class="kpi-row">
+        <div class="kpi"><div class="kpi-val" id="kpi-total">—</div><div class="kpi-lbl">Total Visits</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-unique">—</div><div class="kpi-lbl">Unique IPs</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-today">—</div><div class="kpi-lbl">Today</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-countries">—</div><div class="kpi-lbl">Countries</div></div>
+        <div class="kpi"><div class="kpi-val" id="kpi-mobile">—</div><div class="kpi-lbl">Mobile %</div></div>
+      </div>
+    </div>
+
+    <!-- YOUR INFO -->
+    <div class="card">
+      <div class="card-label">Your Current Info</div>
+      <div class="info-grid">
+        <div class="info-box"><div class="info-lbl">IP Address</div><div class="info-val" id="my-ip">loading…</div></div>
+        <div class="info-box"><div class="info-lbl">Location</div><div class="info-val" id="my-loc">loading…</div></div>
+        <div class="info-box"><div class="info-lbl">ISP / Org</div><div class="info-val" id="my-isp">—</div></div>
+        <div class="info-box"><div class="info-lbl">Timezone</div><div class="info-val" id="my-tz">—</div></div>
+        <div class="info-box"><div class="info-lbl">Browser</div><div class="info-val" id="my-browser">—</div></div>
+        <div class="info-box"><div class="info-lbl">OS</div><div class="info-val" id="my-os">—</div></div>
+        <div class="info-box"><div class="info-lbl">Screen</div><div class="info-val" id="my-screen">—</div></div>
+        <div class="info-box"><div class="info-lbl">Viewport</div><div class="info-val" id="my-viewport">—</div></div>
+        <div class="info-box"><div class="info-lbl">Language</div><div class="info-val" id="my-lang">—</div></div>
+        <div class="info-box"><div class="info-lbl">Device Type</div><div class="info-val" id="my-device">—</div></div>
+        <div class="info-box"><div class="info-lbl">Dark Mode</div><div class="info-val" id="my-dark">—</div></div>
+        <div class="info-box"><div class="info-lbl">Touch Screen</div><div class="info-val" id="my-touch">—</div></div>
+      </div>
+    </div>
+
+    <!-- TOP LOCATIONS -->
+    <div class="card">
+      <div class="card-label">Top Locations</div>
+      <div id="top-countries" style="font-size:.82rem;opacity:.35;font-style:italic">Waiting for log data…</div>
+      <div style="margin-top:16px"><div class="card-label">Top Browsers</div>
+      <div id="top-browsers" style="font-size:.82rem;opacity:.35;font-style:italic">—</div></div>
+      <div style="margin-top:16px"><div class="card-label">Top Devices</div>
+      <div id="top-devices" style="font-size:.82rem;opacity:.35;font-style:italic">—</div></div>
+    </div>
+
+    <!-- VISITOR LOG TABLE -->
+    <div class="card wide">
+      <div class="card-label">Visitor Log</div>
+      <div id="log-status-pill"></div>
+      <div class="filter-row">
+        <input type="text" id="filter-inp" class="filter-inp" placeholder="Filter by IP, country, browser…">
+        <button class="sett-btn" id="export-btn">⬇ Export CSV</button>
+      </div>
+      <div class="tbl-wrap">
+        <table class="vis-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>IP</th>
+              <th>Location</th>
+              <th>ISP</th>
+              <th>Browser / OS</th>
+              <th>Device</th>
+              <th>Screen</th>
+              <th>Language</th>
+              <th>Referrer</th>
+            </tr>
+          </thead>
+          <tbody id="vis-tbody"><tr><td colspan="9" class="tbl-empty">Configure Supabase in Setup below to start logging visitors</td></tr></tbody>
+        </table>
+      </div>
+      <button class="refresh-btn" id="refresh-btn">↻ Refresh Log</button>
+    </div>
+
+    <!-- SETUP -->
+    <div class="card wide">
+      <div class="card-label">Setup — Visitor Logging</div>
+      <div class="setup-cols">
+        <div>
+          <div class="step">
+            <div class="step-n">1</div>
+            <div class="step-t">Go to <a href="https://supabase.com" target="_blank">supabase.com</a> → <strong>New project</strong> (free, no credit card). Once created, go to <strong>Settings → API</strong> and copy your <strong>Project URL</strong> and <strong>anon public</strong> key.</div>
+          </div>
+          <div class="step">
+            <div class="step-n">2</div>
+            <div class="step-t">In Supabase, open <strong>SQL Editor</strong> and run this once to create the visitors table:</div>
+          </div>
+<div class="sql-block">create table visitors (
+  id bigserial primary key,
+  ip text, city text, region text,
+  country text, isp text,
+  browser text, os text, device text,
+  screen text, viewport text,
+  lang text, tz text,
+  referrer text, page text,
+  ts timestamptz default now()
+);
+alter table visitors enable row level security;
+create policy "anon_insert" on visitors
+  for insert to anon with check (true);
+create policy "anon_select" on visitors
+  for select to anon using (true);</div>
+          <div class="step">
+            <div class="step-n">3</div>
+            <div class="step-t">Paste your Project URL and anon key below and hit <strong>Save</strong>. Tracking will activate automatically on atom3d.org.</div>
+          </div>
+          <div class="sett-row">
+            <input type="text" id="sb-url" class="sett-inp" placeholder="https://xxxxxxxx.supabase.co">
+          </div>
+          <div class="sett-row">
+            <input type="password" id="sb-key" class="sett-inp" placeholder="eyJhbGciOi… (anon public key)">
+            <button class="sett-btn" id="save-sb-btn">Save</button>
+          </div>
+          <div class="sett-note">Stored only in this browser's localStorage. Tracking activates on atom3d.org immediately — no deploy needed. Your own visits (owner IP) are never logged.</div>
+        </div>
+        <div>
+          <div class="card-label" style="margin-bottom:12px">Change Password</div>
+          <div class="sett-row">
+            <input type="password" id="new-pw" class="sett-inp" placeholder="New password (min 4 chars)">
+            <button class="sett-btn" id="change-pw-btn">Update</button>
+          </div>
+          <div style="margin-top:24px">
+            <div class="card-label" style="margin-bottom:12px">Subdomain Setup (optional)</div>
+            <div style="font-size:.78rem;opacity:.55;line-height:1.7">
+              To access this page at <strong>owner.atom3d.org</strong>, add a CNAME DNS record at your domain registrar:<br><br>
+              <code style="background:rgba(180,130,255,.1);border-radius:4px;padding:2px 7px;font-size:.75rem;color:#cc99ff">owner → mv3d-ember.github.io</code><br><br>
+              Then create a file <code style="background:rgba(180,130,255,.1);border-radius:4px;padding:2px 7px;font-size:.75rem;color:#cc99ff">owner.atom3d.org/CNAME</code> in a new GitHub repo with just <code style="background:rgba(180,130,255,.1);border-radius:4px;padding:2px 7px;font-size:.75rem;color:#cc99ff">owner.atom3d.org</code> inside it, pointing to this file.
+            </div>
+          </div>
+          <div style="margin-top:24px">
+            <div class="card-label" style="margin-bottom:12px">Danger Zone</div>
+            <button class="sett-btn" id="clear-btn" style="width:100%;background:rgba(255,50,50,.09);border-color:rgba(255,50,50,.22);color:#ff9999">Clear All Data &amp; Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const K_PW     = 'ov_pw';
+const K_SB_URL = 'ov_sb_url';
+const K_SB_KEY = 'ov_sb_key';
+const OWNER_IP = '99.148.20.46';
+
+// ── Crypto ──
+async function sha256(s){
+  const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+// ── Auth ──
+async function login(){
+  const pw=document.getElementById('pw').value;
+  if(!pw){setErr('Enter your password');return;}
+  const h=await sha256(pw);
+  const stored=localStorage.getItem(K_PW)||await sha256('012812');
+  if(h===stored){
+    document.getElementById('login-screen').style.display='none';
+    const dash=document.getElementById('dashboard');
+    dash.style.display='flex';dash.style.flexDirection='column';
+    init();
+  } else {
+    setErr('Wrong password');
+    document.getElementById('pw').value='';
+    document.getElementById('pw').focus();
+  }
+}
+function setErr(m){const e=document.getElementById('login-err');e.textContent=m;setTimeout(()=>e.textContent='',3000);}
+function logout(){
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('pw').value='';
+}
+
+// ── Init ──
+function init(){
+  loadMyInfo();
+  const sbUrl=localStorage.getItem(K_SB_URL);
+  const sbKey=localStorage.getItem(K_SB_KEY);
+  if(sbUrl) document.getElementById('sb-url').value=sbUrl;
+  if(sbKey) document.getElementById('sb-key').value=sbKey;
+  if(sbUrl&&sbKey) loadLog();
+  else setLogStatus(false);
+  document.getElementById('hdr-ts').textContent='Loaded '+new Date().toLocaleTimeString();
+}
+
+// ── UA Parsing ──
+function parseBrowser(ua){
+  if(/Edg\//.test(ua)) return'Edge '+((ua.match(/Edg\/([\d]+)/)||[])[1]||'');
+  if(/OPR\//.test(ua)) return'Opera';
+  if(/Chrome\/([\d]+)/.test(ua)&&!/Chromium/.test(ua)){const m=ua.match(/Chrome\/([\d]+)/);return'Chrome '+(m?m[1]:'');}
+  if(/Firefox\/([\d]+)/.test(ua)){const m=ua.match(/Firefox\/([\d]+)/);return'Firefox '+(m?m[1]:'');}
+  if(/Safari\//.test(ua)&&!/Chrome/.test(ua)){const m=ua.match(/Version\/([\d]+)/);return'Safari '+(m?m[1]:'');}
+  return'Unknown';
+}
+function parseOS(ua){
+  if(/Windows NT 10/.test(ua)) return'Windows 10/11';
+  if(/Windows NT 6\.3/.test(ua)) return'Windows 8.1';
+  if(/Windows NT/.test(ua)) return'Windows';
+  if(/iPhone/.test(ua)) return'iOS (iPhone)';
+  if(/iPad/.test(ua)) return'iPadOS';
+  if(/Mac OS X ([\d_]+)/.test(ua)){const m=ua.match(/Mac OS X ([\d_]+)/);return'macOS '+(m?m[1].replace(/_/g,'.'):'');}
+  if(/Android ([\d.]+)/.test(ua)){const m=ua.match(/Android ([\d.]+)/);return'Android '+(m?m[1]:'');}
+  if(/Linux/.test(ua)) return'Linux';
+  return'Unknown';
+}
+function parseDevice(ua){
+  if(/Mobi|Android.*Mobile|iPhone/.test(ua)) return'📱 Mobile';
+  if(/Tablet|iPad|Android(?!.*Mobile)/.test(ua)) return'📟 Tablet';
+  return'🖥 Desktop';
+}
+
+// ── My Info ──
+async function loadMyInfo(){
+  const ua=navigator.userAgent;
+  document.getElementById('my-browser').textContent=parseBrowser(ua);
+  document.getElementById('my-os').textContent=parseOS(ua);
+  document.getElementById('my-device').textContent=parseDevice(ua);
+  document.getElementById('my-screen').textContent=screen.width+'×'+screen.height;
+  document.getElementById('my-viewport').textContent=window.innerWidth+'×'+window.innerHeight;
+  document.getElementById('my-lang').textContent=navigator.language||'—';
+  document.getElementById('my-tz').textContent=Intl.DateTimeFormat().resolvedOptions().timeZone;
+  document.getElementById('my-dark').textContent=window.matchMedia('(prefers-color-scheme:dark)').matches?'Yes':'No';
+  document.getElementById('my-touch').textContent=('ontouchstart' in window||navigator.maxTouchPoints>0)?'Yes':'No';
+  try{
+    const r=await fetch('https://ipapi.co/json/');
+    const d=await r.json();
+    document.getElementById('my-ip').textContent=d.ip||'—';
+    document.getElementById('my-loc').textContent=[d.city,d.region,d.country_name].filter(Boolean).join(', ')||'—';
+    document.getElementById('my-isp').textContent=d.org||'—';
+  }catch{
+    document.getElementById('my-ip').textContent='Could not fetch';
+    document.getElementById('my-loc').textContent='—';
+  }
+}
+
+// ── Visitor Log ──
+let _allRows=[];
+
+function setLogStatus(ok){
+  const el=document.getElementById('log-status-pill');
+  if(ok){
+    el.innerHTML='<span class="status-pill ok"><span class="dot"></span>Connected to Supabase</span>';
+  } else {
+    el.innerHTML='<span class="status-pill warn"><span class="dot"></span>Not configured — set up Supabase below</span>';
+  }
+}
+
+async function loadLog(){
+  const sbUrl=localStorage.getItem(K_SB_URL);
+  const sbKey=localStorage.getItem(K_SB_KEY);
+  if(!sbUrl||!sbKey){setLogStatus(false);return;}
+  const tbody=document.getElementById('vis-tbody');
+  tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;opacity:.35">Loading…</td></tr>';
+  try{
+    const r=await fetch(sbUrl+'/rest/v1/visitors?order=ts.desc&limit=500',{
+      headers:{'apikey':sbKey,'Authorization':'Bearer '+sbKey}
+    });
+    if(!r.ok){
+      const e=await r.json();
+      toast('Supabase: '+(e.message||r.status),'err');
+      tbody.innerHTML='<tr><td colspan="9" class="tbl-empty">Error — check your Supabase URL and key</td></tr>';
+      setLogStatus(false);return;
+    }
+    _allRows=await r.json();
+    setLogStatus(true);
+    renderTable(_allRows);
+    renderKPIs(_allRows);
+    renderTops(_allRows);
+    document.getElementById('hdr-ts').textContent='Updated '+new Date().toLocaleTimeString();
+  }catch(e){
+    toast('Error: '+e.message,'err');
+    tbody.innerHTML='<tr><td colspan="9" class="tbl-empty">Could not reach Supabase</td></tr>';
+    setLogStatus(false);
+  }
+}
+
+function renderTable(rows){
+  const tbody=document.getElementById('vis-tbody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="9" class="tbl-empty">No visits logged yet — tracking activates when someone visits atom3d.org</td></tr>';return;}
+  tbody.innerHTML=rows.map(v=>`
+    <tr>
+      <td class="vis-sub" style="white-space:nowrap">${fmtTime(v.ts)}</td>
+      <td><span class="vis-ip">${esc(v.ip||'—')}</span></td>
+      <td><div>${esc(v.city||'—')}</div><div class="vis-sub">${esc(v.country||'')}</div></td>
+      <td class="vis-sub">${esc(v.isp||'—')}</td>
+      <td><div>${esc(v.browser||'—')}</div><div class="vis-sub">${esc(v.os||'—')}</div></td>
+      <td class="vis-sub">${esc(v.device||'—')}</td>
+      <td class="vis-sub">${esc(v.screen||'—')}</td>
+      <td class="vis-sub">${esc(v.lang||'—')}</td>
+      <td class="vis-sub" title="${esc(v.referrer||'')}">${esc(v.referrer?v.referrer.replace(/^https?:\/\//,'').slice(0,28):'direct')}</td>
+    </tr>`).join('');
+}
+
+function renderKPIs(rows){
+  document.getElementById('kpi-total').textContent=rows.length.toLocaleString();
+  document.getElementById('kpi-unique').textContent=new Set(rows.map(r=>r.ip)).size.toLocaleString();
+  const today=new Date().toDateString();
+  document.getElementById('kpi-today').textContent=rows.filter(r=>new Date(r.ts).toDateString()===today).length;
+  document.getElementById('kpi-countries').textContent=new Set(rows.map(r=>r.country).filter(Boolean)).size;
+  const mob=rows.filter(r=>r.device&&r.device.includes('Mobile')).length;
+  document.getElementById('kpi-mobile').textContent=rows.length?Math.round(mob/rows.length*100)+'%':'—';
+}
+
+function renderTops(rows){
+  function topN(arr,key,n){
+    const m={};arr.forEach(r=>{const v=r[key];if(v)m[v]=(m[v]||0)+1});
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,n);
+  }
+  const fmtTop=entries=>entries.map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)"><span style="opacity:.75">${esc(k)}</span><span style="color:#cc99ff;font-weight:600">${v}</span></div>`).join('')||'<span style="opacity:.3;font-style:italic">No data yet</span>';
+  document.getElementById('top-countries').innerHTML=fmtTop(topN(rows,'country',6));
+  document.getElementById('top-browsers').innerHTML=fmtTop(topN(rows,'browser',5));
+  document.getElementById('top-devices').innerHTML=fmtTop(topN(rows,'device',4));
+}
+
+// ── Filter ──
+document.getElementById('filter-inp').addEventListener('input',function(){
+  const q=this.value.toLowerCase().trim();
+  if(!q){renderTable(_allRows);return;}
+  renderTable(_allRows.filter(r=>
+    [r.ip,r.city,r.country,r.browser,r.os,r.device,r.isp,r.referrer].some(v=>v&&v.toLowerCase().includes(q))
+  ));
+});
+
+// ── Export CSV ──
+document.getElementById('export-btn').addEventListener('click',function(){
+  if(!_allRows.length){toast('No data to export','err');return;}
+  const cols=['ts','ip','city','region','country','isp','browser','os','device','screen','viewport','lang','tz','referrer','page'];
+  const csv=[cols.join(','),..._allRows.map(r=>cols.map(c=>JSON.stringify(r[c]||'')).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='atom3d-visitors-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('Exported '+_allRows.length+' rows','ok');
+});
+
+// ── Helpers ──
+function fmtTime(ts){
+  const d=new Date(ts),now=Date.now(),diff=Math.floor((now-d)/1000);
+  if(diff<60)return diff+'s ago';
+  if(diff<3600)return Math.floor(diff/60)+'m ago';
+  if(diff<86400)return Math.floor(diff/3600)+'h ago';
+  return d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Settings ──
+function saveSB(){
+  const url=document.getElementById('sb-url').value.trim();
+  const key=document.getElementById('sb-key').value.trim();
+  if(!url||!key){toast('Enter both URL and key','err');return;}
+  localStorage.setItem(K_SB_URL,url);
+  localStorage.setItem(K_SB_KEY,key);
+  toast('Saved — loading log…','ok');
+  loadLog();
+}
+async function changePw(){
+  const v=document.getElementById('new-pw').value;
+  if(!v||v.length<4){toast('Min 4 characters','err');return;}
+  localStorage.setItem(K_PW,await sha256(v));
+  document.getElementById('new-pw').value='';
+  toast('Password updated','ok');
+}
+function clearAll(){
+  if(!confirm('Clear all saved settings and log out?'))return;
+  [K_PW,K_SB_URL,K_SB_KEY].forEach(k=>localStorage.removeItem(k));
+  logout();
+}
+
+// ── Wire ──
+document.getElementById('login-btn').addEventListener('click',login);
+document.getElementById('pw').addEventListener('keydown',e=>e.key==='Enter'&&login());
+document.getElementById('logout-btn').addEventListener('click',logout);
+document.getElementById('save-sb-btn').addEventListener('click',saveSB);
+document.getElementById('change-pw-btn').addEventListener('click',changePw);
+document.getElementById('clear-btn').addEventListener('click',clearAll);
+document.getElementById('refresh-btn').addEventListener('click',()=>{loadLog();toast('Refreshing…');});
+
+// ── Toast ──
+let _tt;
+function toast(msg,type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className='show '+(type||'');
+  clearTimeout(_tt);_tt=setTimeout(()=>el.className='',3200);
+}
+</script>
+</body>
+</html>
