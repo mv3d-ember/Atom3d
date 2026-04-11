@@ -220,16 +220,20 @@ create policy "anon_select" on visitors
   for select to anon using (true);</div>
           <div class="step">
             <div class="step-n">3</div>
-            <div class="step-t">Paste your Project URL and anon key below and hit <strong>Save</strong>. Tracking will activate automatically on atom3d.org.</div>
+            <div class="step-t">Add your <strong>GitHub token</strong> (same one used in admin.html), then paste your Supabase URL and anon key and hit <strong>Save</strong>. This commits a <code style="background:rgba(180,130,255,.1);border-radius:4px;padding:1px 6px;color:#cc99ff">trackingconfig.json</code> to the repo so every visitor's browser can log itself automatically.</div>
+          </div>
+          <div class="sett-row">
+            <input type="password" id="gh-token" class="sett-inp" placeholder="ghp_… GitHub token (repo write)">
+            <button class="sett-btn" id="save-token-btn">Save</button>
           </div>
           <div class="sett-row">
             <input type="text" id="sb-url" class="sett-inp" placeholder="https://xxxxxxxx.supabase.co">
           </div>
           <div class="sett-row">
             <input type="password" id="sb-key" class="sett-inp" placeholder="eyJhbGciOi… (anon public key)">
-            <button class="sett-btn" id="save-sb-btn">Save</button>
+            <button class="sett-btn" id="save-sb-btn">Deploy Tracking</button>
           </div>
-          <div class="sett-note">Stored only in this browser's localStorage. Tracking activates on atom3d.org immediately — no deploy needed. Your own visits (owner IP) are never logged.</div>
+          <div class="sett-note">Commits trackingconfig.json to GitHub (~1 min deploy). After that, every visitor to atom3d.org is logged — not just you. Your own visits (owner IP) are always excluded.</div>
         </div>
         <div>
           <div class="card-label" style="margin-bottom:12px">Change Password</div>
@@ -262,6 +266,8 @@ create policy "anon_select" on visitors
 const K_PW     = 'ov_pw';
 const K_SB_URL = 'ov_sb_url';
 const K_SB_KEY = 'ov_sb_key';
+const K_TOKEN  = 'ov_token';
+const OWNER    = 'mv3d-ember', REPO = 'atom3d', CFG_FILE = 'trackingconfig.json';
 const OWNER_IP = '99.148.20.46';
 
 // ── Crypto ──
@@ -299,8 +305,10 @@ function init(){
   loadMyInfo();
   const sbUrl=localStorage.getItem(K_SB_URL);
   const sbKey=localStorage.getItem(K_SB_KEY);
+  const tok=localStorage.getItem(K_TOKEN);
   if(sbUrl) document.getElementById('sb-url').value=sbUrl;
   if(sbKey) document.getElementById('sb-key').value=sbKey;
+  if(tok)   document.getElementById('gh-token').value=tok;
   if(sbUrl&&sbKey) loadLog();
   else setLogStatus(false);
   document.getElementById('hdr-ts').textContent='Loaded '+new Date().toLocaleTimeString();
@@ -466,14 +474,34 @@ function fmtTime(ts){
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // ── Settings ──
-function saveSB(){
+function saveToken(){
+  const v=document.getElementById('gh-token').value.trim();
+  if(!v){toast('Enter a token','err');return;}
+  localStorage.setItem(K_TOKEN,v);
+  toast('GitHub token saved','ok');
+}
+
+async function saveSB(){
   const url=document.getElementById('sb-url').value.trim();
   const key=document.getElementById('sb-key').value.trim();
-  if(!url||!key){toast('Enter both URL and key','err');return;}
+  const token=localStorage.getItem(K_TOKEN);
+  if(!url||!key){toast('Enter both Supabase URL and key','err');return;}
+  if(!token){toast('Add your GitHub token first','err');return;}
   localStorage.setItem(K_SB_URL,url);
   localStorage.setItem(K_SB_KEY,key);
-  toast('Saved — loading log…','ok');
-  loadLog();
+  // Commit trackingconfig.json so ALL visitors get the credentials
+  try{
+    const hdrs={'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
+    const apiUrl=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${CFG_FILE}`;
+    let sha=null;
+    const cur=await fetch(apiUrl,{headers:hdrs});
+    if(cur.ok){const d=await cur.json();sha=d.sha;}
+    const body={message:'chore: update visitor tracking config',content:btoa(JSON.stringify({sbUrl:url,sbKey:key})),...(sha&&{sha})};
+    const res=await fetch(apiUrl,{method:'PUT',headers:hdrs,body:JSON.stringify(body)});
+    if(!res.ok){const e=await res.json();toast('GitHub: '+(e.message||'error'),'err');return;}
+    toast('Saved & committed — tracking live in ~1 min','ok');
+    loadLog();
+  }catch(e){toast('Error: '+e.message,'err');}
 }
 async function changePw(){
   const v=document.getElementById('new-pw').value;
@@ -484,7 +512,7 @@ async function changePw(){
 }
 function clearAll(){
   if(!confirm('Clear all saved settings and log out?'))return;
-  [K_PW,K_SB_URL,K_SB_KEY].forEach(k=>localStorage.removeItem(k));
+  [K_PW,K_SB_URL,K_SB_KEY,K_TOKEN].forEach(k=>localStorage.removeItem(k));
   logout();
 }
 
@@ -492,6 +520,7 @@ function clearAll(){
 document.getElementById('login-btn').addEventListener('click',login);
 document.getElementById('pw').addEventListener('keydown',e=>e.key==='Enter'&&login());
 document.getElementById('logout-btn').addEventListener('click',logout);
+document.getElementById('save-token-btn').addEventListener('click',saveToken);
 document.getElementById('save-sb-btn').addEventListener('click',saveSB);
 document.getElementById('change-pw-btn').addEventListener('click',changePw);
 document.getElementById('clear-btn').addEventListener('click',clearAll);
