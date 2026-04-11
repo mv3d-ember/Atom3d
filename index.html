@@ -1359,8 +1359,8 @@ function showHiddenMsg(msg){
   clearTimeout(pop._t);pop._t=setTimeout(function(){pop.style.opacity='0';pop.style.transform='translate(-50%,-60%)'},3000);
 }
 
-// Default on load
-setTimeout(()=>{ inp.value='Carbon'; generate(); },200);
+// Default on load — skip if owner view already took over
+setTimeout(()=>{ if(!document.documentElement.dataset.ownerView){ inp.value='Carbon'; generate(); } },200);
 
 // ── Themes ────────────────────────────────────────────────────────────────────
 const THEME_SCENE={
@@ -2518,9 +2518,11 @@ function activateOwnerView(){
     }
     rsz();draw();window.addEventListener('resize',rsz);
   })();
-  // Load Copper as the default element for owner view
-  var inp=document.getElementById('inp')||document.querySelector('input[type=text]');
-  if(inp&&typeof generate==='function'){inp.value='Copper';generate();}
+  // Load Copper — delayed to always run after the Carbon default timeout
+  setTimeout(function(){
+    var el=document.getElementById('inp');
+    if(el&&typeof generate==='function'){el.value='Copper';generate();}
+  },350);
 }
 fetch('https://api.ipify.org?format=json')
   .then(function(r){return r.json()})
