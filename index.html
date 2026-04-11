@@ -2533,7 +2533,7 @@ fetch('https://api.ipify.org?format=json')
 <script>
 // ── Visitor Tracking ──────────────────────────────────────────────────────────
 (function(){
-  if(document.documentElement.dataset.ownerView) return; // never log owner
+  var OWNER_IP_TRK='99.148.20.46';
   function br(ua){
     if(/Edg\//.test(ua))return'Edge';
     if(/OPR\//.test(ua))return'Opera';
@@ -2557,30 +2557,56 @@ fetch('https://api.ipify.org?format=json')
     if(/Tablet|iPad|Android(?!.*Mobile)/.test(ua))return'Tablet';
     return'Desktop';
   }
-  // Config is fetched from repo — works for every visitor, not just this browser
-  fetch('/trackingconfig.json?t='+Date.now())
+  // Fetch IP first — skip all logging if owner, avoiding any geo API calls
+  fetch('https://api.ipify.org?format=json')
     .then(function(r){return r.json()})
-    .then(function(cfg){
-      if(!cfg.sbUrl||!cfg.sbKey) return;
+    .then(function(ipData){
+      if(!ipData||!ipData.ip||ipData.ip===OWNER_IP_TRK) return; // skip owner
+      var visitorIp=ipData.ip;
       var ua=navigator.userAgent;
-      fetch('https://ipapi.co/json/')
+      // Config is fetched from repo — works for every visitor, not just this browser
+      fetch('/trackingconfig.json?t='+Date.now())
         .then(function(r){return r.json()})
-        .then(function(g){
-          fetch(cfg.sbUrl+'/rest/v1/visitors',{
-            method:'POST',
-            headers:{'apikey':cfg.sbKey,'Authorization':'Bearer '+cfg.sbKey,'Content-Type':'application/json','Prefer':'return=minimal'},
-            body:JSON.stringify({
-              ip:g.ip,city:g.city||null,region:g.region||null,country:g.country_name||null,isp:g.org||null,
-              browser:br(ua),os:os(ua),device:dev(ua),
-              screen:screen.width+'x'+screen.height,
-              viewport:window.innerWidth+'x'+window.innerHeight,
-              lang:navigator.language||null,
-              tz:Intl.DateTimeFormat().resolvedOptions().timeZone||null,
-              referrer:document.referrer||null,
-              page:location.pathname
+        .then(function(cfg){
+          if(!cfg.sbUrl||!cfg.sbKey) return;
+          // ipinfo.io: 50,000 req/month free, no per-day hard cap like ipapi.co
+          fetch('https://ipinfo.io/json?token=')
+            .then(function(r){return r.json()})
+            .then(function(g){
+              fetch(cfg.sbUrl+'/rest/v1/visitors',{
+                method:'POST',
+                headers:{'apikey':cfg.sbKey,'Authorization':'Bearer '+cfg.sbKey,'Content-Type':'application/json','Prefer':'return=minimal'},
+                body:JSON.stringify({
+                  ip:visitorIp,city:g.city||null,region:g.region||null,country:g.country||null,isp:g.org||null,
+                  browser:br(ua),os:os(ua),device:dev(ua),
+                  screen:screen.width+'x'+screen.height,
+                  viewport:window.innerWidth+'x'+window.innerHeight,
+                  lang:navigator.language||null,
+                  tz:g.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone||null,
+                  referrer:document.referrer||null,
+                  page:location.pathname
+                })
+              });
             })
-          });
-        });
+            .catch(function(){
+              // Geo lookup failed — still log visit with IP only
+              fetch(cfg.sbUrl+'/rest/v1/visitors',{
+                method:'POST',
+                headers:{'apikey':cfg.sbKey,'Authorization':'Bearer '+cfg.sbKey,'Content-Type':'application/json','Prefer':'return=minimal'},
+                body:JSON.stringify({
+                  ip:visitorIp,city:null,region:null,country:null,isp:null,
+                  browser:br(ua),os:os(ua),device:dev(ua),
+                  screen:screen.width+'x'+screen.height,
+                  viewport:window.innerWidth+'x'+window.innerHeight,
+                  lang:navigator.language||null,
+                  tz:Intl.DateTimeFormat().resolvedOptions().timeZone||null,
+                  referrer:document.referrer||null,
+                  page:location.pathname
+                })
+              });
+            });
+        })
+        .catch(function(){});
     })
     .catch(function(){});
 })();

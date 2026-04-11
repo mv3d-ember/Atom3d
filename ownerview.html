@@ -353,10 +353,10 @@ async function loadMyInfo(){
   document.getElementById('my-dark').textContent=window.matchMedia('(prefers-color-scheme:dark)').matches?'Yes':'No';
   document.getElementById('my-touch').textContent=('ontouchstart' in window||navigator.maxTouchPoints>0)?'Yes':'No';
   try{
-    const r=await fetch('https://ipapi.co/json/');
+    const r=await fetch('https://ipinfo.io/json?token=');
     const d=await r.json();
     document.getElementById('my-ip').textContent=d.ip||'—';
-    document.getElementById('my-loc').textContent=[d.city,d.region,d.country_name].filter(Boolean).join(', ')||'—';
+    document.getElementById('my-loc').textContent=[d.city,d.region,d.country].filter(Boolean).join(', ')||'—';
     document.getElementById('my-isp').textContent=d.org||'—';
   }catch{
     document.getElementById('my-ip').textContent='Could not fetch';
