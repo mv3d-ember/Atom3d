@@ -57,6 +57,9 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
 .maint-btn.go-live{background:linear-gradient(135deg,#22aa55,#116633);color:#fff}
 .status-ts{font-size:.7rem;opacity:.3;margin-top:11px;text-align:center}
 .maint-note{font-size:.7rem;opacity:.28;margin-top:8px;text-align:center;line-height:1.5}
+.allow-owner-btn{width:100%;padding:10px;border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;letter-spacing:.03em;transition:background .2s,border-color .2s;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#ccc;margin-top:10px}
+.allow-owner-btn.yes{background:rgba(140,80,255,.18);border-color:rgba(180,120,255,.5);color:#cc99ff}
+.allow-owner-btn:hover:not(:disabled){opacity:.85}
 
 /* ── Stats ── */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -178,6 +181,7 @@ body{background:#04040f;color:#dde;font-family:'Segoe UI',system-ui,sans-serif;m
         </div>
       </div>
       <button class="maint-btn go-maint" id="maint-btn">Enable Maintenance Mode</button>
+      <button class="allow-owner-btn" id="allow-owner-btn" style="display:none" onclick="toggleAllowOwner()">Allow Owner: NO</button>
       <div class="status-ts" id="sts">Last changed: never</div>
       <div class="maint-note">Changes push to GitHub and may take ~1 min to propagate.</div>
     </div>
@@ -376,9 +380,10 @@ const K_BANS    = 'a3d_bans';
 const K_LOG     = 'a3d_log';
 const K_GC_CODE = 'a3d_gc_code';
 const K_GC_TOK  = 'a3d_gc_tok';
-const K_THEME   = 'a3d_theme';
-const K_JB_ID   = 'a3d_jb_id';
-const K_JB_KEY  = 'a3d_jb_key';
+const K_THEME       = 'a3d_theme';
+const K_JB_ID       = 'a3d_jb_id';
+const K_JB_KEY      = 'a3d_jb_key';
+const K_ALLOW_OWNER = 'a3d_allow_owner';
 
 // ── Crypto ──
 async function sha256(s){
@@ -459,16 +464,21 @@ function applyMaintenanceUI(on){
   const btn  = document.getElementById('maint-btn');
   const badge= document.getElementById('hdr-badge');
   const ts   = document.getElementById('sts');
+  const aoBtn= document.getElementById('allow-owner-btn');
 
   if(on){
     dot.className = 'status-dot maint';
     name.textContent = 'Maintenance Mode';
     name.style.color = '#ffaa44';
-    sub.textContent = 'Site is showing maintenance page';
     btn.className = 'maint-btn go-live';
     btn.textContent = 'Disable Maintenance Mode';
     badge.className = 'hdr-badge maint';
     badge.textContent = '⚠ MAINTENANCE';
+    aoBtn.style.display = '';
+    const ao = localStorage.getItem(K_ALLOW_OWNER) === 'true';
+    aoBtn.textContent = 'Allow Owner: ' + (ao ? 'YES' : 'NO');
+    aoBtn.className = 'allow-owner-btn' + (ao ? ' yes' : '');
+    sub.textContent = ao ? 'Owner-only access enabled' : 'Site is showing maintenance page';
   } else {
     dot.className = 'status-dot live';
     name.textContent = 'Online';
@@ -478,6 +488,7 @@ function applyMaintenanceUI(on){
     btn.textContent = 'Enable Maintenance Mode';
     badge.className = 'hdr-badge live';
     badge.textContent = '● LIVE';
+    aoBtn.style.display = 'none';
   }
 
   const t = localStorage.getItem(K_MTIME);
@@ -509,8 +520,29 @@ async function toggleMaintenance(){
   toast(next ? 'Maintenance mode ON — site shows maintenance page' : 'Maintenance OFF — site is live', next ? 'err' : 'ok');
 }
 
+async function toggleAllowOwner(){
+  const btn = document.getElementById('allow-owner-btn');
+  const current = localStorage.getItem(K_ALLOW_OWNER) === 'true';
+  const next = !current;
+  btn.disabled = true;
+  const token = localStorage.getItem(K_TOKEN);
+  if(token){
+    const maint = localStorage.getItem(K_MAINT) === 'true';
+    const ok = await pushStatus(token, maint);
+    if(!ok){ btn.disabled = false; return; }
+  } else {
+    toast('No GitHub token — setting saved locally only', 'err');
+  }
+  localStorage.setItem(K_ALLOW_OWNER, String(next));
+  applyMaintenanceUI(true);
+  btn.disabled = false;
+  addLog('Allow Owner set to ' + (next ? 'YES' : 'NO'));
+  toast('Allow Owner: ' + (next ? 'YES — only owner IP can view site' : 'NO — all visitors see maintenance page'), next ? 'ok' : 'err');
+}
+
 async function pushStatus(token, maintenance){
-  const payload = {maintenance, banlist: getBans().map(b=>b.ip), theme: localStorage.getItem(K_THEME)||null};
+  const allowOwner = localStorage.getItem(K_ALLOW_OWNER) === 'true';
+  const payload = {maintenance, allowOwner, banlist: getBans().map(b=>b.ip), theme: localStorage.getItem(K_THEME)||null};
   if(!token){ toast('Add a GitHub token in Settings','err'); return false; }
   try{
     const hdrs={'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'};
