@@ -1,5 +1,6 @@
 {
-  "maintenance": false,
+  "maintenance": true,
+  "allowOwner": false,
   "banlist": [],
   "theme": "easter"
 }
