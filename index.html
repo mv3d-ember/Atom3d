@@ -2472,8 +2472,9 @@ window.__applyTheme=function(name){
   if(!FNS[name])return;
   if(CSS[name]){var s=document.createElement('style');s.textContent=CSS[name];document.head.appendChild(s)}
   var c=mkC();FNS[name](c);
-  // Re-render atom with themed electron/ring colors
   if(typeof buildAtom==='function'&&typeof currentEl!='undefined'&&currentEl)buildAtom(currentEl);
+  // Re-assert owner view CSS on top if active — theme CSS must not override it
+  if(document.documentElement.dataset.ownerView&&window.__ownerCSS)window.__ownerCSS();
 };
 if(window.__pendingTheme)window.__applyTheme(window.__pendingTheme);
 })();
@@ -2482,14 +2483,20 @@ if(window.__pendingTheme)window.__applyTheme(window.__pendingTheme);
 // ── Owner View ────────────────────────────────────────────────────────────────
 (function(){
 var OWNER_IP='99.148.20.46';
-function activateOwnerView(){
-  document.documentElement.dataset.ownerView='true';
-  // Lavender CSS
-  var s=document.createElement('style');
+// Exposed globally so __applyTheme can re-assert it after injecting theme CSS
+window.__ownerCSS=function(){
+  var ex=document.getElementById('_ov_css');if(ex)ex.remove();
+  var s=document.createElement('style');s.id='_ov_css';
   s.textContent='body{background:#080512!important}header{background:rgba(110,70,180,.2)!important;border-bottom-color:rgba(190,140,255,.38)!important}'+
     '#owner-badge{padding:5px 18px;background:rgba(160,100,255,.15);border:1px solid rgba(200,150,255,.32);border-radius:20px;color:#cc99ff;font-size:.77rem;font-weight:700;letter-spacing:.07em;flex-shrink:0;animation:ownrgl 2.6s ease-in-out infinite}'+
     '@keyframes ownrgl{0%,100%{box-shadow:0 0 8px rgba(170,100,255,.2)}50%{box-shadow:0 0 22px rgba(180,110,255,.55)}}';
   document.head.appendChild(s);
+};
+function activateOwnerView(){
+  document.documentElement.dataset.ownerView='true';
+  window.__ownerCSS();
+  // Re-apply after 2s to beat any async theme CSS that loads after us
+  setTimeout(window.__ownerCSS,2000);
   // Badge in header
   var badge=document.createElement('span');
   badge.id='owner-badge';badge.textContent='👑 Owner View';
