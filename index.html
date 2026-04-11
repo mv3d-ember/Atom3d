@@ -2518,8 +2518,9 @@ function activateOwnerView(){
     }
     rsz();draw();window.addEventListener('resize',rsz);
   })();
-  // Rebuild atom with lavender electrons if one is already showing
-  if(typeof buildAtom==='function'&&typeof currentEl!='undefined'&&currentEl)buildAtom(currentEl);
+  // Load Copper as the default element for owner view
+  var inp=document.getElementById('inp')||document.querySelector('input[type=text]');
+  if(inp&&typeof generate==='function'){inp.value='Copper';generate();}
 }
 fetch('https://api.ipify.org?format=json')
   .then(function(r){return r.json()})
