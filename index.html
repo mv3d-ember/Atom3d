@@ -1359,8 +1359,8 @@ function showHiddenMsg(msg){
   clearTimeout(pop._t);pop._t=setTimeout(function(){pop.style.opacity='0';pop.style.transform='translate(-50%,-60%)'},3000);
 }
 
-// Default on load — skip if owner view already took over
-setTimeout(()=>{ if(!document.documentElement.dataset.ownerView){ inp.value='Carbon'; generate(); } },200);
+// Default on load — wait 900ms so ipify has time to resolve before we commit to Carbon
+setTimeout(()=>{ if(!document.documentElement.dataset.ownerView){ inp.value='Carbon'; generate(); } },900);
 
 // ── Themes ────────────────────────────────────────────────────────────────────
 const THEME_SCENE={
@@ -2518,15 +2518,17 @@ function activateOwnerView(){
     }
     rsz();draw();window.addEventListener('resize',rsz);
   })();
-  // Load Copper — delayed to always run after the Carbon default timeout
-  setTimeout(function(){
-    var el=document.getElementById('inp');
-    if(el&&typeof generate==='function'){el.value='Copper';generate();}
-  },350);
 }
 fetch('https://api.ipify.org?format=json')
   .then(function(r){return r.json()})
-  .then(function(d){if(d&&d.ip===OWNER_IP)activateOwnerView()})
+  .then(function(d){
+    if(d&&d.ip===OWNER_IP){
+      activateOwnerView();
+      // Load Copper immediately — ownerView is already set so Carbon timer will skip
+      var el=document.getElementById('inp');
+      if(el&&typeof generate==='function'){el.value='Copper';generate();}
+    }
+  })
   .catch(function(){});
 })();
 </script>
