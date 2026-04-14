@@ -276,6 +276,18 @@ canvas{display:block}
   [data-theme="purple"] .mnav-btn{color:rgba(190,140,255,.38)}
   [data-theme="purple"] .mnav-btn.mob-active{color:#bb55ff}
 }
+/* ── Orbital Mode Toggle ── */
+#orb-toggle-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.52);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 12px 5px 8px;pointer-events:all;transition:border-color .25s}
+#orb-toggle-wrap:hover{border-color:rgba(85,136,255,.45)}
+#orb-toggle-wrap.active{border-color:rgba(85,136,255,.55);background:rgba(20,30,80,.6)}
+.orb-sw{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.orb-sw input{opacity:0;width:0;height:0}
+.orb-sl{position:absolute;inset:0;background:rgba(255,255,255,.18);border-radius:20px;transition:background .22s;cursor:pointer}
+.orb-sl:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .22s,background .22s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.orb-sw input:checked + .orb-sl{background:#4466ff}
+.orb-sw input:checked + .orb-sl:before{transform:translateX(16px)}
+#orb-label{font-size:.76rem;color:rgba(255,255,255,.62);white-space:nowrap;user-select:none;transition:color .2s}
+#orb-toggle-wrap.active #orb-label{color:rgba(140,170,255,.9)}
 </style>
 </head>
 <body>
@@ -374,6 +386,13 @@ canvas{display:block}
   </button>
 </div>
 <div id="wrap">
+  <div id="orb-toggle-wrap">
+    <label class="orb-sw" title="Toggle atomic orbital probability clouds">
+      <input type="checkbox" id="orb-chk" onchange="setOrbitalMode(this.checked)">
+      <span class="orb-sl"></span>
+    </label>
+    <span id="orb-label">Orbital Mode</span>
+  </div>
   <div id="info">
     <div class="sheet-handle" id="info-handle"></div>
     <h2 id="i-name"></h2>
@@ -646,7 +665,7 @@ window.addEventListener('resize',()=>{
 });
 
 // ── Atom State ────────────────────────────────────────────────────────────────
-let atomGroup=null, electronOrbits=[], currentEl=null, specialMeshes=new Map();
+let atomGroup=null, electronOrbits=[], orbitalClouds=[], currentEl=null, specialMeshes=new Map(), orbitalMode=false;
 
 // Each shell gets a distinct 3D tilt so the model looks fully 3D
 const TILTS=[
@@ -679,9 +698,122 @@ function makeEmojiSprite(emoji){
   return spr;
 }
 
-function buildAtom(el){
+// ── Atomic Orbital Mode ────────────────────────────────────────────────────────
+const AUFBAU=[
+  {n:1,l:'s',max:2},{n:2,l:'s',max:2},{n:2,l:'p',max:6},
+  {n:3,l:'s',max:2},{n:3,l:'p',max:6},{n:4,l:'s',max:2},{n:3,l:'d',max:10},
+  {n:4,l:'p',max:6},{n:5,l:'s',max:2},{n:4,l:'d',max:10},{n:5,l:'p',max:6},
+  {n:6,l:'s',max:2},{n:4,l:'f',max:14},{n:5,l:'d',max:10},{n:6,l:'p',max:6},
+  {n:7,l:'s',max:2},{n:5,l:'f',max:14},{n:6,l:'d',max:10},{n:7,l:'p',max:6}];
+
+function getOrbConf(Z){
+  const r=[];let rem=Z;
+  for(const o of AUFBAU){if(rem<=0)break;const f=Math.min(rem,o.max);r.push({...o,fill:f});rem-=f;}
+  return r;
+}
+
+// Generate N point positions for the given orbital type at shell radius R
+function orbPts(type,R,N,axId){
+  const a=new Float32Array(N*3);
+  const sp=R*0.36;
+  const AXES=[[1,0,0],[0,1,0],[0,0,1],[0.707,0.707,0],[0.707,0,0.707],[0,0.707,0.707]];
+  const ax=AXES[axId%6];
+  if(type==='s'){
+    for(let i=0;i<N;i++){
+      let r=R*(0.45+Math.random()*0.95)*Math.pow(-Math.log(Math.random()*0.88+0.06),0.32)*0.9;
+      r=Math.max(R*0.12,Math.min(r,R*1.9));
+      const th=Math.acos(2*Math.random()-1),ph=Math.random()*Math.PI*2;
+      a[i*3]=r*Math.sin(th)*Math.cos(ph);a[i*3+1]=r*Math.sin(th)*Math.sin(ph);a[i*3+2]=r*Math.cos(th);
+    }
+  } else if(type==='p'){
+    for(let i=0;i<N;i++){
+      const side=i<N/2?1:-1;
+      const cx=side*ax[0]*R*0.72,cy=side*ax[1]*R*0.72,cz=side*ax[2]*R*0.72;
+      let px,py,pz,d;
+      do{px=(Math.random()*2-1)*sp;py=(Math.random()*2-1)*sp;pz=(Math.random()*2-1)*sp;d=px*px+py*py+pz*pz;}while(d>sp*sp);
+      a[i*3]=cx+px;a[i*3+1]=cy+py;a[i*3+2]=cz+pz;
+    }
+  } else if(type==='d'){
+    for(let i=0;i<N;i++){
+      const ang=Math.random()*Math.PI*2,ba=Math.random()*Math.PI*2;
+      const r2=R+(Math.random()-0.5)*sp;
+      const tube=sp*0.75;
+      const tx=(r2+tube*Math.cos(ba))*Math.cos(ang);
+      const ty=(r2+tube*Math.cos(ba))*Math.sin(ang);
+      const tz=tube*Math.sin(ba)*0.55;
+      const m=axId%3;
+      a[i*3]=m===2?tz:tx;a[i*3+1]=ty;a[i*3+2]=m===0?tz:m===1?ty:tx;
+    }
+  } else {
+    // f — three orthogonal dumbbells combined
+    const LA=[[1,0,0],[0,1,0],[0,0,1]];
+    for(let i=0;i<N;i++){
+      const la=LA[i%3];const side=Math.random()>0.5?1:-1;
+      const rf=R*(0.48+Math.random()*0.62);
+      a[i*3]=side*la[0]*rf*0.72+(Math.random()-0.5)*sp*0.6;
+      a[i*3+1]=side*la[1]*rf*0.72+(Math.random()-0.5)*sp*0.6;
+      a[i*3+2]=side*la[2]*rf*0.72+(Math.random()-0.5)*sp*0.6;
+    }
+  }
+  return a;
+}
+
+function buildOrbitalAtom(el){
   if(atomGroup) scene.remove(atomGroup);
-  electronOrbits=[]; specialMeshes.clear();
+  electronOrbits=[];orbitalClouds=[];specialMeshes.clear();
+  atomGroup=new THREE.Group();scene.add(atomGroup);
+  const col=COLORS[el.category]||0xffffff;
+  const tc=new THREE.Color(col);
+  const nr=0.5+Math.log(Math.max(el.Z,1))*0.28;
+  // Nucleus
+  atomGroup.add(new THREE.Mesh(
+    new THREE.SphereGeometry(nr,40,40),
+    new THREE.MeshPhongMaterial({color:tc,emissive:tc,emissiveIntensity:0.65,shininess:130})));
+  const nLight=new THREE.PointLight(col,2.5,50);atomGroup.add(nLight);
+  // Colors
+  const _thm=document.documentElement.dataset.theme||'';
+  const _ET={christmas:{ec:0xff4422},halloween:{ec:0xff6600},easter:{ec:0xff88cc},newyear:{ec:0xffcc00},valentine:{ec:0xff3366}}[_thm];
+  let eCol=_ET?new THREE.Color(_ET.ec):new THREE.Color(0x88bbff);
+  if(document.documentElement.dataset.ownerView) eCol=new THREE.Color(0xcc88ff);
+  // Build orbital clouds
+  const conf=getOrbConf(el.Z);
+  let axId=0,maxR=nr;
+  conf.forEach(orb=>{
+    const R=nr+1.4+orb.n*orb.n*0.44;
+    maxR=Math.max(maxR,R+R*0.42);
+    const N=orb.l==='f'?300:orb.l==='d'?280:orb.l==='p'?260:220;
+    const pts=orbPts(orb.l,R,N,axId);
+    if(orb.l!=='s') axId++;
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pts,3));
+    const cloudCol=eCol.clone().lerp(tc,0.22);
+    const mat=new THREE.PointsMaterial({
+      color:cloudCol,
+      size:orb.l==='f'?0.19:orb.l==='d'?0.17:0.14,
+      transparent:true,
+      opacity:orb.fill/orb.max>0.6?0.58:0.42,
+      depthWrite:false,
+      blending:THREE.AdditiveBlending
+    });
+    const cloud=new THREE.Points(geo,mat);
+    const rs=(0.0008+Math.random()*0.0006)*(Math.random()>0.5?1:-1);
+    orbitalClouds.push({cloud,rx:rs*0.6,ry:rs,rz:rs*0.45});
+    atomGroup.add(cloud);
+  });
+  camera.position.set(0,0,maxR*2.6+8);controls.target.set(0,0,0);controls.update();
+}
+
+function setOrbitalMode(on){
+  orbitalMode=on;
+  const wrap=document.getElementById('orb-toggle-wrap');
+  if(wrap) wrap.classList.toggle('active',on);
+  if(currentEl) buildAtom(currentEl);
+}
+
+function buildAtom(el){
+  if(orbitalMode){ buildOrbitalAtom(el); return; }
+  if(atomGroup) scene.remove(atomGroup);
+  electronOrbits=[]; orbitalClouds=[]; specialMeshes.clear();
   atomGroup=new THREE.Group();
   scene.add(atomGroup);
 
@@ -1328,6 +1460,7 @@ document.getElementById('btn-toggle').addEventListener('click',()=>{
 (function animate(){
   requestAnimationFrame(animate);
   electronOrbits.forEach(({orbit,speed})=>{ orbit.rotation.z+=speed; });
+  orbitalClouds.forEach(({cloud,rx,ry,rz})=>{ cloud.rotation.x+=rx; cloud.rotation.y+=ry; cloud.rotation.z+=rz; });
   if(molGroup) molGroup.rotation.y+=.003;
   controls.update();
   renderer.render(scene,camera);
