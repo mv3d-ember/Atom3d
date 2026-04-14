@@ -799,11 +799,11 @@ function buildOrbitalAtom(el){
     const mat=new THREE.PointsMaterial({
       color:cloudCol,
       map:_ot,
-      size:0.55,
+      size:1.1,
       transparent:true,
-      opacity:0.82,
+      opacity:0.9,
       depthWrite:false,
-      alphaTest:0.01,
+      alphaTest:0.005,
       blending:THREE.AdditiveBlending
     });
     const cloud=new THREE.Points(geo,mat);
@@ -818,7 +818,8 @@ function setOrbitalMode(on){
   orbitalMode=on;
   const wrap=document.getElementById('orb-toggle-wrap');
   if(wrap) wrap.classList.toggle('active',on);
-  if(currentEl) buildAtom(currentEl);
+  // Re-run generate() so the full build pipeline runs regardless of currentEl state
+  if(typeof generate==='function') generate();
 }
 
 function buildAtom(el){
