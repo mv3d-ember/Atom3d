@@ -280,12 +280,10 @@ canvas{display:block}
 #orb-toggle-wrap{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:100;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.52);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:5px 12px 5px 8px;pointer-events:all;transition:border-color .25s}
 #orb-toggle-wrap:hover{border-color:rgba(85,136,255,.45)}
 #orb-toggle-wrap.active{border-color:rgba(85,136,255,.55);background:rgba(20,30,80,.6)}
-.orb-sw{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
-.orb-sw input{opacity:0;width:0;height:0}
-.orb-sl{position:absolute;inset:0;background:rgba(255,255,255,.18);border-radius:20px;transition:background .22s;cursor:pointer}
-.orb-sl:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .22s,background .22s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
-.orb-sw input:checked + .orb-sl{background:#4466ff}
-.orb-sw input:checked + .orb-sl:before{transform:translateX(16px)}
+#orb-sw{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;background:rgba(255,255,255,.18);border-radius:20px;transition:background .22s;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent}
+#orb-sw:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .22s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+#orb-sw[aria-checked="true"]{background:#4466ff}
+#orb-sw[aria-checked="true"]:before{transform:translateX(16px)}
 #orb-label{font-size:.76rem;color:rgba(255,255,255,.62);white-space:nowrap;user-select:none;transition:color .2s}
 #orb-toggle-wrap.active #orb-label{color:rgba(140,170,255,.9)}
 </style>
@@ -387,10 +385,7 @@ canvas{display:block}
 </div>
 <div id="wrap">
   <div id="orb-toggle-wrap">
-    <label class="orb-sw" title="Toggle atomic orbital probability clouds">
-      <input type="checkbox" id="orb-chk" onclick="setOrbitalMode(this.checked)">
-      <span class="orb-sl"></span>
-    </label>
+    <div id="orb-sw" role="switch" aria-checked="false" aria-label="Toggle orbital mode" onclick="setOrbitalMode()"></div>
     <span id="orb-label">Orbital Mode</span>
   </div>
   <div id="info">
@@ -814,16 +809,15 @@ function buildOrbitalAtom(el){
   camera.position.set(0,0,maxR*2.6+8);controls.target.set(0,0,0);controls.update();
 }
 
-function setOrbitalMode(on){
-  orbitalMode=!!on;
+function setOrbitalMode(){
+  orbitalMode=!orbitalMode;
+  const sw=document.getElementById('orb-sw');
+  if(sw) sw.setAttribute('aria-checked', orbitalMode?'true':'false');
   const wrap=document.getElementById('orb-toggle-wrap');
   if(wrap) wrap.classList.toggle('active',orbitalMode);
-  // Rebuild — prefer currentEl directly so we never depend on inp.value
   if(currentEl){
     if(orbitalMode) buildOrbitalAtom(currentEl);
     else buildAtom(currentEl);
-  } else if(inp&&inp.value.trim()){
-    generate();
   }
 }
 
