@@ -775,13 +775,22 @@ function buildOrbitalAtom(el){
   const _ET={christmas:{ec:0xff4422},halloween:{ec:0xff6600},easter:{ec:0xff88cc},newyear:{ec:0xffcc00},valentine:{ec:0xff3366}}[_thm];
   let eCol=_ET?new THREE.Color(_ET.ec):new THREE.Color(0x88bbff);
   if(document.documentElement.dataset.ownerView) eCol=new THREE.Color(0xcc88ff);
+  // Glowing circle sprite texture — shared by all orbital materials
+  const _oc=document.createElement('canvas');_oc.width=_oc.height=64;
+  const _ox=_oc.getContext('2d');
+  const _og=_ox.createRadialGradient(32,32,0,32,32,32);
+  _og.addColorStop(0,'rgba(255,255,255,1)');
+  _og.addColorStop(0.45,'rgba(255,255,255,0.65)');
+  _og.addColorStop(1,'rgba(255,255,255,0)');
+  _ox.fillStyle=_og;_ox.beginPath();_ox.arc(32,32,32,0,Math.PI*2);_ox.fill();
+  const _ot=new THREE.CanvasTexture(_oc);
   // Build orbital clouds
   const conf=getOrbConf(el.Z);
   let axId=0,maxR=nr;
   conf.forEach(orb=>{
     const R=nr+1.4+orb.n*orb.n*0.44;
     maxR=Math.max(maxR,R+R*0.42);
-    const N=orb.l==='f'?300:orb.l==='d'?280:orb.l==='p'?260:220;
+    const N=orb.l==='f'?500:orb.l==='d'?480:orb.l==='p'?440:380;
     const pts=orbPts(orb.l,R,N,axId);
     if(orb.l!=='s') axId++;
     const geo=new THREE.BufferGeometry();
@@ -789,10 +798,12 @@ function buildOrbitalAtom(el){
     const cloudCol=eCol.clone().lerp(tc,0.22);
     const mat=new THREE.PointsMaterial({
       color:cloudCol,
-      size:orb.l==='f'?0.19:orb.l==='d'?0.17:0.14,
+      map:_ot,
+      size:0.55,
       transparent:true,
-      opacity:orb.fill/orb.max>0.6?0.58:0.42,
+      opacity:0.82,
       depthWrite:false,
+      alphaTest:0.01,
       blending:THREE.AdditiveBlending
     });
     const cloud=new THREE.Points(geo,mat);
