@@ -388,7 +388,7 @@ canvas{display:block}
 <div id="wrap">
   <div id="orb-toggle-wrap">
     <label class="orb-sw" title="Toggle atomic orbital probability clouds">
-      <input type="checkbox" id="orb-chk" onchange="setOrbitalMode(this.checked)">
+      <input type="checkbox" id="orb-chk" onclick="setOrbitalMode(this.checked)">
       <span class="orb-sl"></span>
     </label>
     <span id="orb-label">Orbital Mode</span>
@@ -815,11 +815,16 @@ function buildOrbitalAtom(el){
 }
 
 function setOrbitalMode(on){
-  orbitalMode=on;
+  orbitalMode=!!on;
   const wrap=document.getElementById('orb-toggle-wrap');
-  if(wrap) wrap.classList.toggle('active',on);
-  // Re-run generate() so the full build pipeline runs regardless of currentEl state
-  if(typeof generate==='function') generate();
+  if(wrap) wrap.classList.toggle('active',orbitalMode);
+  // Rebuild — prefer currentEl directly so we never depend on inp.value
+  if(currentEl){
+    if(orbitalMode) buildOrbitalAtom(currentEl);
+    else buildAtom(currentEl);
+  } else if(inp&&inp.value.trim()){
+    generate();
+  }
 }
 
 function buildAtom(el){
