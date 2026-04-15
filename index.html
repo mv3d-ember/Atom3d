@@ -385,7 +385,7 @@ canvas{display:block}
 </div>
 <div id="wrap">
   <div id="orb-toggle-wrap">
-    <div id="orb-sw" role="switch" aria-checked="false" aria-label="Toggle orbital mode" onclick="setOrbitalMode()"></div>
+    <div id="orb-sw" role="switch" aria-checked="false" aria-label="Toggle orbital mode"></div>
     <span id="orb-label">Orbital Mode</span>
   </div>
   <div id="info">
@@ -820,6 +820,7 @@ function setOrbitalMode(){
     else buildAtom(currentEl);
   }
 }
+document.getElementById('orb-sw').addEventListener('click', setOrbitalMode);
 
 function buildAtom(el){
   if(orbitalMode){ buildOrbitalAtom(el); return; }
