@@ -1389,6 +1389,7 @@ document.getElementById('btn-toggle').addEventListener('click',()=>{
   document.getElementById('app-title').textContent=isAtom?'Atom3D':'Bond Builder';
   document.getElementById('btn-toggle').textContent=isAtom?'🔗 Bond Builder':'⚛ Atom Viewer';
   document.getElementById('hint').textContent=isAtom?'Enter an element above to begin':'Enter 2–3 elements to see how they bond';
+  document.getElementById('orb-toggle-wrap').style.display=isAtom?'flex':'none';
   if(atomGroup){scene.remove(atomGroup);atomGroup=null;electronOrbits=[];}
   if(molGroup){scene.remove(molGroup);molGroup=null;}
   camera.position.set(0,0,22);controls.target.set(0,0,0);controls.update();
