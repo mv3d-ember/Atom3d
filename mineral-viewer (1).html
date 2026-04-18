@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mineral Viewer</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #060a12;
+      color: #dde8f8;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Search bar */
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #1a2d4a;
+      flex-shrink: 0;
+      background: #060a12;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 600px;
+    }
+
+    .search-wrapper label {
+      font-size: 13px;
+      color: #4477aa;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #mineral-search {
+      flex: 1;
+      background: #0d1526;
+      border: 1px solid #1e3355;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #dde8f8;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #mineral-search::placeholder {
+      color: #334466;
+    }
+
+    #mineral-search:focus {
+      border-color: #2d6cc0;
+    }
+
+    /* Main layout */
+    main {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Left side panel */
+    .side-panel {
+      width: 40%;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background-color: #080d1a;
+      border-right: 1px solid #1a2d4a;
+    }
+
+    #panel-header {
+      padding: 22px 24px 16px;
+      border-bottom: 1px solid #1a2d4a;
+      flex-shrink: 0;
+    }
+
+    #mineral-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: #5ba3e8;
+      letter-spacing: 0.01em;
+    }
+
+    .panel-section {
+      background-color: #060a12;
+      padding: 20px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-section + .panel-section {
+      border-top: 1px solid #1a2d4a;
+    }
+
+    .panel-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #3a6699;
+      font-weight: 500;
+    }
+
+    .panel-placeholder {
+      flex: 1;
+      background: #0a1020;
+      border: 1px dashed #1a2d4a;
+      border-radius: 6px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1a2d4a;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    /* 3D canvas area (right) */
+    #canvas-container {
+      flex: 1;
+      background-color: #060a12;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #canvas-container canvas {
+      display: block;
+    }
+
+    #mineral-photo {
+      flex: 1;
+      min-height: 160px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #0d1526;
+    }
+
+    #mineral-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    #structure-info {
+      flex: 1;
+      min-height: 100px;
+      font-size: 13px;
+      line-height: 1.65;
+      color: #7a9fc0;
+    }
+
+    #fun-facts {
+      flex: 1;
+      min-height: 100px;
+    }
+
+    #fun-facts ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    #fun-facts li {
+      position: relative;
+      padding-left: 18px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #7a9fc0;
+    }
+
+    #fun-facts li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: #2266cc;
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .panel-error {
+      font-size: 13px;
+      font-style: italic;
+      color: #cc6644;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="search-wrapper">
+      <label for="mineral-search">Mineral</label>
+      <input
+        id="mineral-search"
+        type="search"
+        placeholder="Search minerals, e.g. Quartz, Pyrite…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+  </header>
+
+  <main>
+
+    <aside class="side-panel">
+
+      <div id="panel-header">
+        <h1 id="mineral-name">—</h1>
+      </div>
+
+      <div class="panel-section">
+        <h2>Photo</h2>
+        <div id="mineral-photo"></div>
+      </div>
+
+      <div class="panel-section">
+        <h2>Structure Info</h2>
+        <div id="structure-info"></div>
+      </div>
+
+      <div class="panel-section">
+        <h2>Fun Facts</h2>
+        <div id="fun-facts"></div>
+      </div>
+
+    </aside>
+
+    <div id="canvas-container"></div>
+
+  </main>
+
+  <script>
+    const MINERALS = {
+
+      quartz: {
+        name: 'Quartz',
+        formula: 'SiO\u2082',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/f/fc/Quartz_crystals_Macro_1.JPG',
+        structureInfo: 'Quartz belongs to the trigonal crystal system and is built from a continuous three-dimensional framework of SiO\u2084 tetrahedra, each sharing all four oxygen atoms with neighboring tetrahedra. The corner-sharing network forms a helical arrangement along the c-axis, giving quartz its characteristic hardness of 7 on the Mohs scale.',
+        facts: [
+          'Quartz is the second most abundant mineral in Earth\'s continental crust, after feldspar.',
+          'Squeezing quartz generates a voltage — the piezoelectric effect — which is why quartz crystals keep time so precisely in watches and oscillators.',
+          'Ancient Romans called transparent quartz \u201ckrystallos\u201d, believing it was ice frozen so hard it could never melt.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.69, y:  0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  0.69, y: -0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y:  0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y: -0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  1.38, y:  1.38, z:  1.38, color: '#7799cc', element: 'Si' },
+          { x:  2.07, y:  2.07, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  2.07, y:  0.69, z:  2.07, color: '#ff5555', element: 'O'  },
+          { x:  0.69, y:  2.07, z:  2.07, color: '#ff5555', element: 'O'  },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],
+          [5,1],[5,6],[5,7],[5,8]
+        ]
+      },
+
+      halite: {
+        name: 'Halite',
+        formula: 'NaCl',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/6/67/Halite_crystals_%28four%29.jpg',
+        structureInfo: 'Halite crystallizes in the cubic system with the rock-salt structure: each Na\u207a is surrounded by six Cl\u207b ions at the corners of an octahedron, and vice versa. This perfect octahedral coordination produces three identical cleavage planes at right angles, so broken halite always yields smaller cubes.',
+        facts: [
+          'Halite is simply table salt as a mineral \u2014 its name comes from the Greek \u201chalos\u201d (salt) and \u201clithos\u201d (stone).',
+          'Pakistan\u2019s Khewra Salt Mine, one of the world\u2019s largest, formed about 600 million years ago and contains an estimated 6.7 billion tonnes of halite.',
+          'Sodium and chlorine are both toxic in pure elemental form, yet their ionic compound is essential for human nerve signalling and fluid balance.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#aa88ff', element: 'Na' },
+          { x:  1.40, y:  0.00, z:  0.00, color: '#55cc55', element: 'Cl' },
+          { x: -1.40, y:  0.00, z:  0.00, color: '#55cc55', element: 'Cl' },
+          { x:  0.00, y:  1.40, z:  0.00, color: '#55cc55', element: 'Cl' },
+          { x:  0.00, y: -1.40, z:  0.00, color: '#55cc55', element: 'Cl' },
+          { x:  0.00, y:  0.00, z:  1.40, color: '#55cc55', element: 'Cl' },
+          { x:  0.00, y:  0.00, z: -1.40, color: '#55cc55', element: 'Cl' },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],[0,5],[0,6]
+        ]
+      },
+
+      diamond: {
+        name: 'Diamond',
+        formula: 'C',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Diamond-170566.jpg',
+        structureInfo: 'Diamond adopts the cubic diamond structure in which every carbon atom is covalently bonded to four others at tetrahedral angles, forming an infinite interlocking 3-D network. This uniform sp\u00b3 bonding throughout the entire crystal makes diamond the hardest natural material, rating 10 on the Mohs scale.',
+        facts: [
+          'Diamonds form roughly 150\u2013200 km below Earth\u2019s surface at pressures exceeding 45,000 atmospheres, then shoot up to the surface inside volcanic kimberlite pipes.',
+          'Diamond and graphite are both pure carbon \u2014 the difference is entirely in bonding: graphite has weakly stacked sp\u00b2 sheets, diamond a fully sp\u00b3 3-D network.',
+          'The Cullinan Diamond, found in South Africa in 1905, is the largest gem-quality rough diamond ever discovered, weighing 3,106 carats (about 621 g).',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#ccddff', element: 'C' },
+          { x:  0.89, y:  0.89, z:  0.89, color: '#ccddff', element: 'C' },
+          { x:  0.89, y: -0.89, z: -0.89, color: '#ccddff', element: 'C' },
+          { x: -0.89, y:  0.89, z: -0.89, color: '#ccddff', element: 'C' },
+          { x: -0.89, y: -0.89, z:  0.89, color: '#ccddff', element: 'C' },
+          { x:  1.78, y:  0.00, z:  0.00, color: '#ccddff', element: 'C' },
+          { x:  0.00, y:  1.78, z:  0.00, color: '#ccddff', element: 'C' },
+          { x:  0.00, y:  0.00, z:  1.78, color: '#ccddff', element: 'C' },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],
+          [1,5],[1,6],[1,7]
+        ]
+      },
+
+      calcite: {
+        name: 'Calcite',
+        formula: 'CaCO\u2083',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Calcite_crystals_%28Pugh_Quarry%2C_near_Custar%2C_Ohio%2C_USA%29_3.jpg',
+        structureInfo: 'Calcite belongs to the trigonal system and contains planar CO\u2083\u00b2\u207b triangular units alternating with Ca\u00b2\u207a ions in stacked layers. The layers are offset to form a rhombohedral lattice, which produces three perfect non-orthogonal cleavage planes and the striking double refraction seen in transparent specimens.',
+        facts: [
+          'Calcite is the main mineral in limestone, marble, and chalk \u2014 rock types that cover roughly 15% of Earth\u2019s land surface.',
+          'Transparent \u201cIceland spar\u201d calcite splits light into two rays (double refraction); Vikings may have used it as a \u201csunstone\u201d to navigate on overcast days.',
+          'Seashells, coral, and eggshells are all made primarily of calcite (or its polymorph aragonite), secreted biologically at ambient temperature.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  2.20, color: '#44cccc', element: 'Ca' },
+          { x:  0.00, y:  0.00, z:  0.00, color: '#888888', element: 'C'  },
+          { x:  1.30, y:  0.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x: -0.65, y:  1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x: -0.65, y: -1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+        ],
+        bonds: [
+          [1,2],[1,3],[1,4],
+          [0,2],[0,3],[0,4]
+        ]
+      },
+
+      pyrite: {
+        name: 'Pyrite',
+        formula: 'FeS\u2082',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/c/c6/Pyrite_Cubes.JPG',
+        structureInfo: 'Pyrite crystallizes in the cubic system with Fe\u00b2\u207a at the corners and face-centers of the unit cell and S\u2082\u00b2\u207b dumbbell pairs at edge midpoints and the body center. Each iron is octahedrally coordinated by six sulfur atoms from six different S\u2082 pairs, whose axes align along the \u27e81 1 1\u27e9 cube diagonals.',
+        facts: [
+          'Pyrite is nicknamed \u201cFool\u2019s Gold\u201d \u2014 its brassy metallic luster has deceived prospectors throughout history, though real gold is much heavier and doesn\u2019t tarnish.',
+          'Striking pyrite against iron produces sparks, making it one of the earliest fire-starting tools used by humans alongside flint.',
+          'Despite containing iron, pyrite was historically roasted to produce sulfur dioxide for manufacturing sulfuric acid, still one of the most important industrial chemicals.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#ffaa00', element: 'Fe' },
+          { x:  1.20, y:  0.00, z:  0.00, color: '#dddd00', element: 'S'  },
+          { x:  0.00, y:  1.20, z:  0.00, color: '#dddd00', element: 'S'  },
+          { x: -1.20, y:  0.00, z:  0.00, color: '#dddd00', element: 'S'  },
+          { x:  0.00, y: -1.20, z:  0.00, color: '#dddd00', element: 'S'  },
+          { x:  0.00, y:  0.00, z:  1.20, color: '#dddd00', element: 'S'  },
+          { x:  0.00, y:  0.00, z: -1.20, color: '#dddd00', element: 'S'  },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],[0,5],[0,6],
+          [1,2],[3,4],[5,6]
+        ]
+      },
+
+      fluorite: {
+        name: 'Fluorite',
+        formula: 'CaF\u2082',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/8/86/Fluorite_Macro_1.JPG',
+        structureInfo: 'Fluorite adopts the cubic fluorite structure in which Ca\u00b2\u207a ions occupy a face-centered cubic lattice and F\u207b ions fill every tetrahedral hole, giving each calcium eight-fold cubic coordination by fluorine. This high-symmetry arrangement and perfect octahedral cleavage make fluorite one of the most recognizable minerals in a collection.',
+        facts: [
+          'Fluorite gave its name to \u201cfluorescence\u201d \u2014 many specimens glow vividly under ultraviolet light due to trace rare-earth impurities or structural defects.',
+          'The element fluorine takes its name from fluorite; it was first isolated from fluorite in 1886 by Henri Moissan, who received the Nobel Prize for the feat.',
+          'Fluorite appears in almost every color \u2014 purple, green, blue, yellow, colorless \u2014 because trace amounts of rare-earth elements substitute for calcium in the lattice.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#44cccc', element: 'Ca' },
+          { x:  0.88, y:  0.88, z:  0.88, color: '#88ff88', element: 'F'  },
+          { x:  0.88, y:  0.88, z: -0.88, color: '#88ff88', element: 'F'  },
+          { x:  0.88, y: -0.88, z:  0.88, color: '#88ff88', element: 'F'  },
+          { x:  0.88, y: -0.88, z: -0.88, color: '#88ff88', element: 'F'  },
+          { x: -0.88, y:  0.88, z:  0.88, color: '#88ff88', element: 'F'  },
+          { x: -0.88, y:  0.88, z: -0.88, color: '#88ff88', element: 'F'  },
+          { x: -0.88, y: -0.88, z:  0.88, color: '#88ff88', element: 'F'  },
+          { x: -0.88, y: -0.88, z: -0.88, color: '#88ff88', element: 'F'  },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8]
+        ]
+      },
+
+      corundum: {
+        name: 'Corundum',
+        formula: 'Al\u2082O\u2083',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Ruby_gem.JPG',
+        structureInfo: 'Corundum belongs to the trigonal system with a hexagonally close-packed oxygen framework in which aluminum fills two-thirds of the available octahedral sites. Face-sharing AlO\u2086 octahedra alternate with vacant sites along the c-axis, producing the dense, tightly bonded structure responsible for its hardness of 9 on the Mohs scale.',
+        facts: [
+          'Ruby and sapphire are both gem-quality corundum \u2014 chromium impurities produce the red of ruby, while iron and titanium give sapphire its blue.',
+          'Corundum\u2019s hardness makes it the abrasive in ordinary emery boards: those nail-filing strips contain crushed corundum mixed with magnetite.',
+          'The Star of India, a 563-carat star sapphire displaying a six-rayed asterism from needle-like rutile inclusions, is housed at the American Museum of Natural History.',
+        ],
+        atoms: [
+          { x: -0.90, y:  0.00, z:  0.00, color: '#aaaaaa', element: 'Al' },
+          { x:  0.90, y:  0.00, z:  0.00, color: '#aaaaaa', element: 'Al' },
+          { x:  0.00, y:  1.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y: -0.50, z:  0.87, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y: -0.50, z: -0.87, color: '#ff5555', element: 'O'  },
+          { x: -2.00, y:  1.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x: -2.00, y: -0.50, z:  0.87, color: '#ff5555', element: 'O'  },
+          { x: -2.00, y: -0.50, z: -0.87, color: '#ff5555', element: 'O'  },
+          { x:  2.00, y:  1.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  2.00, y: -0.50, z:  0.87, color: '#ff5555', element: 'O'  },
+          { x:  2.00, y: -0.50, z: -0.87, color: '#ff5555', element: 'O'  },
+        ],
+        bonds: [
+          [0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
+          [1,2],[1,3],[1,4],[1,8],[1,9],[1,10]
+        ]
+      },
+
+      olivine: {
+        name: 'Olivine',
+        formula: '(Mg,Fe)\u2082SiO\u2084',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Peridot_olivine_on_basalt.JPG',
+        structureInfo: 'Olivine crystallizes in the orthorhombic system as a nesosilicate: isolated SiO\u2084 tetrahedra are held together only by Mg\u00b2\u207a or Fe\u00b2\u207a cations in adjacent octahedral sites. The Mg:Fe ratio varies continuously between the end-members forsterite (Mg\u2082SiO\u2084) and fayalite (Fe\u2082SiO\u2084).',
+        facts: [
+          'Olivine is the most abundant mineral in Earth\u2019s upper mantle, making up roughly 50\u201360% of its volume \u2014 the deep Earth is essentially a vast olivine reservoir.',
+          'Olivine has been found in meteorites, on Mars, and in the dust around distant stars, making it one of the most cosmically widespread silicate minerals known.',
+          'Gem-quality olivine, called peridot, is one of the few gemstones that comes in only one color \u2014 green \u2014 because iron is an inseparable part of its formula.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.69, y:  0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  0.69, y: -0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y:  0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y: -0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  1.80, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x: -1.80, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+        ],
+        bonds: [
+          [0,1],[0,2],[0,3],[0,4],
+          [5,1],[5,2],
+          [6,3],[6,4]
+        ]
+      }
+
+    };
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    (function () {
+      const container = document.getElementById('canvas-container');
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x060a12);
+
+      const camera = new THREE.PerspectiveCamera(
+        45,
+        container.clientWidth / container.clientHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 0, 7);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+      scene.add(ambientLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+      dirLight.position.set(5, 8, 5);
+      scene.add(dirLight);
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.08;
+      controls.minDistance = 2;
+      controls.maxDistance = 30;
+
+      const resizeObserver = new ResizeObserver(([entry]) => {
+        const { inlineSize: w, blockSize: h } = entry.contentBoxSize[0];
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      });
+      resizeObserver.observe(container);
+
+      const structureGroup = new THREE.Group();
+      scene.add(structureGroup);
+
+      const _up = new THREE.Vector3(0, 1, 0);
+
+      function renderStructure(name) {
+        const mineral = MINERALS[name];
+        if (!mineral) return;
+
+        // Remove and dispose every mesh from the previous structure
+        for (let i = structureGroup.children.length - 1; i >= 0; i--) {
+          const c = structureGroup.children[i];
+          c.geometry.dispose();
+          c.material.dispose();
+          structureGroup.remove(c);
+        }
+
+        // Atom spheres
+        mineral.atoms.forEach(({ x, y, z, color }) => {
+          const mesh = new THREE.Mesh(
+            new THREE.SphereGeometry(0.28, 32, 16),
+            new THREE.MeshStandardMaterial({ color, roughness: 0.45, metalness: 0.1 })
+          );
+          mesh.position.set(x, y, z);
+          structureGroup.add(mesh);
+        });
+
+        // Bond cylinders
+        mineral.bonds.forEach(([i, j]) => {
+          const a = mineral.atoms[i];
+          const b = mineral.atoms[j];
+          const start = new THREE.Vector3(a.x, a.y, a.z);
+          const end   = new THREE.Vector3(b.x, b.y, b.z);
+          const dir   = new THREE.Vector3().subVectors(end, start);
+          const len   = dir.length();
+
+          const mesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.07, 0.07, len, 8, 1),
+            new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.6 })
+          );
+          mesh.position.copy(start.clone().lerp(end, 0.5));
+          mesh.quaternion.setFromUnitVectors(_up, dir.normalize());
+          structureGroup.add(mesh);
+        });
+      }
+
+      function updatePanel(name) {
+        const mineral = MINERALS[name];
+        if (!mineral) return;
+
+        document.getElementById('mineral-name').textContent = mineral.name;
+
+        const photoEl = document.getElementById('mineral-photo');
+        const img = document.createElement('img');
+        img.src = mineral.image;
+        img.alt = mineral.name;
+        photoEl.replaceChildren(img);
+
+        document.getElementById('structure-info').textContent = mineral.structureInfo;
+
+        const ul = document.createElement('ul');
+        mineral.facts.forEach(fact => {
+          const li = document.createElement('li');
+          li.textContent = fact;
+          ul.appendChild(li);
+        });
+        document.getElementById('fun-facts').replaceChildren(ul);
+      }
+
+      function clearScene() {
+        for (let i = structureGroup.children.length - 1; i >= 0; i--) {
+          const c = structureGroup.children[i];
+          c.geometry.dispose();
+          c.material.dispose();
+          structureGroup.remove(c);
+        }
+      }
+
+      document.getElementById('mineral-search').addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return;
+
+        const key = this.value.trim().toLowerCase();
+
+        if (MINERALS[key]) {
+          renderStructure(key);
+          updatePanel(key);
+        } else {
+          clearScene();
+          document.getElementById('mineral-name').textContent = '';
+          document.getElementById('mineral-photo').replaceChildren();
+          document.getElementById('fun-facts').replaceChildren();
+          const msg = document.createElement('p');
+          msg.className = 'panel-error';
+          msg.textContent = key
+            ? `No mineral named \u201c${key}\u201d \u2014 try quartz, pyrite, or diamond.`
+            : 'Type a mineral name and press Enter.';
+          document.getElementById('structure-info').replaceChildren(msg);
+        }
+      });
+
+      renderStructure('quartz');
+      updatePanel('quartz');
+
+      (function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      })();
+    })();
+  </script>
+</body>
+</html>
