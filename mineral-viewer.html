@@ -12,8 +12,8 @@
     }
 
     body {
-      background-color: #060a12;
-      color: #dde8f8;
+      background-color: #0d0d0d;
+      color: #ffffff;
       font-family: 'Segoe UI', system-ui, sans-serif;
       height: 100vh;
       display: flex;
@@ -24,9 +24,8 @@
     /* Search bar */
     header {
       padding: 16px 24px;
-      border-bottom: 1px solid #1a2d4a;
+      border-bottom: 1px solid #222;
       flex-shrink: 0;
-      background: #060a12;
     }
 
     .search-wrapper {
@@ -38,7 +37,7 @@
 
     .search-wrapper label {
       font-size: 13px;
-      color: #4477aa;
+      color: #888;
       white-space: nowrap;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -46,22 +45,22 @@
 
     #mineral-search {
       flex: 1;
-      background: #0d1526;
-      border: 1px solid #1e3355;
+      background: #1a1a1a;
+      border: 1px solid #333;
       border-radius: 6px;
       padding: 10px 14px;
-      color: #dde8f8;
+      color: #fff;
       font-size: 15px;
       outline: none;
       transition: border-color 0.2s;
     }
 
     #mineral-search::placeholder {
-      color: #334466;
+      color: #555;
     }
 
     #mineral-search:focus {
-      border-color: #2d6cc0;
+      border-color: #555;
     }
 
     /* Main layout */
@@ -71,69 +70,11 @@
       overflow: hidden;
     }
 
-    /* Left side panel */
-    .side-panel {
-      width: 40%;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      background-color: #080d1a;
-      border-right: 1px solid #1a2d4a;
-    }
-
-    #panel-header {
-      padding: 22px 24px 16px;
-      border-bottom: 1px solid #1a2d4a;
-      flex-shrink: 0;
-    }
-
-    #mineral-name {
-      font-size: 22px;
-      font-weight: 600;
-      color: #5ba3e8;
-      letter-spacing: 0.01em;
-    }
-
-    .panel-section {
-      background-color: #060a12;
-      padding: 20px 24px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .panel-section + .panel-section {
-      border-top: 1px solid #1a2d4a;
-    }
-
-    .panel-section h2 {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #3a6699;
-      font-weight: 500;
-    }
-
-    .panel-placeholder {
-      flex: 1;
-      background: #0a1020;
-      border: 1px dashed #1a2d4a;
-      border-radius: 6px;
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #1a2d4a;
-      font-size: 12px;
-      letter-spacing: 0.04em;
-    }
-
-    /* 3D canvas area (right) */
+    /* Left: 3D canvas area */
     #canvas-container {
-      flex: 1;
-      background-color: #060a12;
+      width: 60%;
+      border-right: 1px solid #1e1e1e;
+      background-color: #0d0d0d;
       position: relative;
       overflow: hidden;
     }
@@ -142,12 +83,57 @@
       display: block;
     }
 
+    /* Right panel */
+    .side-panel {
+      width: 40%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      gap: 1px;
+      background-color: #111;
+    }
+
+    .panel-section {
+      background-color: #0d0d0d;
+      padding: 20px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .panel-section + .panel-section {
+      border-top: 1px solid #1e1e1e;
+    }
+
+    .panel-section h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #555;
+      font-weight: 500;
+    }
+
+    .panel-placeholder {
+      flex: 1;
+      background: #141414;
+      border: 1px dashed #222;
+      border-radius: 6px;
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2e2e2e;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+
     #mineral-photo {
       flex: 1;
       min-height: 160px;
       border-radius: 4px;
       overflow: hidden;
-      background: #0d1526;
+      background: #111;
     }
 
     #mineral-photo img {
@@ -162,7 +148,7 @@
       min-height: 100px;
       font-size: 13px;
       line-height: 1.65;
-      color: #7a9fc0;
+      color: #aaa;
     }
 
     #fun-facts {
@@ -182,14 +168,14 @@
       padding-left: 18px;
       font-size: 13px;
       line-height: 1.55;
-      color: #7a9fc0;
+      color: #aaa;
     }
 
     #fun-facts li::before {
       content: '›';
       position: absolute;
       left: 0;
-      color: #2266cc;
+      color: #555;
       font-size: 15px;
       line-height: 1.4;
     }
@@ -198,6 +184,15 @@
       font-size: 13px;
       font-style: italic;
       color: #cc6644;
+    }
+    #mintoindbut {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
     }
   </style>
 </head>
@@ -213,16 +208,15 @@
         autocomplete="off"
         spellcheck="false"
       />
+      <a href="index.html"><button id="mintoindbut">Element viewer</button></a>
     </div>
   </header>
 
   <main>
 
-    <aside class="side-panel">
+    <div id="canvas-container"></div>
 
-      <div id="panel-header">
-        <h1 id="mineral-name">—</h1>
-      </div>
+    <aside class="side-panel">
 
       <div class="panel-section">
         <h2>Photo</h2>
@@ -240,8 +234,6 @@
       </div>
 
     </aside>
-
-    <div id="canvas-container"></div>
 
   </main>
 
@@ -464,7 +456,7 @@
       const container = document.getElementById('canvas-container');
 
       const scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x060a12);
+      scene.background = new THREE.Color(0x0d0d0d);
 
       const camera = new THREE.PerspectiveCamera(
         45,
@@ -550,8 +542,6 @@
         const mineral = MINERALS[name];
         if (!mineral) return;
 
-        document.getElementById('mineral-name').textContent = mineral.name;
-
         const photoEl = document.getElementById('mineral-photo');
         const img = document.createElement('img');
         img.src = mineral.image;
@@ -588,7 +578,6 @@
           updatePanel(key);
         } else {
           clearScene();
-          document.getElementById('mineral-name').textContent = '';
           document.getElementById('mineral-photo').replaceChildren();
           document.getElementById('fun-facts').replaceChildren();
           const msg = document.createElement('p');
