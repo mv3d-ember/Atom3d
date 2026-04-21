@@ -1690,6 +1690,234 @@
           { x:  1.50, y:  0.00, z:  0.00, color: '#44cccc', element: 'Ca' },
         ],
         bonds: [[0,1],[0,2],[0,3],[0,4],[0,5]]
+      },
+
+      coal: {
+        name: 'Coal',
+        formula: 'C (with H, O, N, S impurities)',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/f/f1/Coal_anthracite.jpg',
+        structureInfo: 'Coal is a combustible black sedimentary rock composed primarily of carbon with varying amounts of hydrogen, oxygen, nitrogen, and sulfur. It forms from the compaction and lithification of plant material over millions of years. Carbon content and rank increase from lignite to sub-bituminous, bituminous, and anthracite coal.',
+        facts: [
+          'Coal powered the Industrial Revolution and still generates roughly 36% of global electricity, making it the world\'s single largest source of power.',
+          'Anthracite coal contains up to 98% carbon — the highest rank — and burns the hottest and cleanest of all coal types.',
+          'Coal seams preserve ancient Carboniferous forests: fossils of giant tree ferns, club mosses, and horsetails are commonly found embedded in coal.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#333333', element: 'C' },
+          { x:  1.20, y:  0.00, z:  0.00, color: '#333333', element: 'C' },
+          { x: -0.60, y:  1.04, z:  0.00, color: '#333333', element: 'C' },
+          { x: -0.60, y: -1.04, z:  0.00, color: '#333333', element: 'C' },
+          { x:  0.60, y:  1.04, z:  1.20, color: '#444444', element: 'C' },
+          { x:  0.00, y:  0.00, z:  1.80, color: '#555555', element: 'C' },
+          { x:  2.00, y:  0.00, z:  0.00, color: '#ff5555', element: 'O' },
+          { x: -1.40, y:  1.60, z:  0.00, color: '#ccccff', element: 'H' },
+        ],
+        bonds: [[0,1],[0,2],[0,3],[1,6],[2,7],[0,4],[4,5],[3,5]]
+      },
+
+      chalk: {
+        name: 'Chalk',
+        formula: 'CaCO₃',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/7/7e/White_cliffs_of_dover_02.jpg',
+        structureInfo: 'Chalk is a soft, fine-grained white variety of limestone composed almost entirely of the calcite shells and skeletal fragments of microscopic marine organisms called coccolithophores. It forms in warm, shallow seas and is characterised by its extreme softness (Mohs 1–2) and brilliant white colour.',
+        facts: [
+          'The White Cliffs of Dover stretch 8 km along the English coast and rise up to 110 m — they are one of the most iconic natural landmarks in Europe.',
+          'Chalk is so soft it can be scratched with a fingernail and was historically used to write on dark surfaces, giving rise to blackboard chalk.',
+          'The Cretaceous Period (145–66 Ma) takes its name from the Latin word "creta" meaning chalk, reflecting the vast chalk deposits laid down globally during this time.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#44cccc', element: 'Ca' },
+          { x:  1.30, y:  0.00, z:  0.00, color: '#888888', element: 'C'  },
+          { x:  2.00, y:  0.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.65, y:  1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.65, y: -1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  0.00, z:  2.40, color: '#44cccc', element: 'Ca' },
+        ],
+        bonds: [[0,1],[1,2],[1,3],[1,4],[5,2],[0,5]]
+      },
+
+      flint: {
+        name: 'Flint',
+        formula: 'SiO₂',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Flint.jpg',
+        structureInfo: 'Flint is a hard, fine-grained cryptocrystalline form of silica that forms as nodules and concretions within chalk and limestone. It breaks with a characteristic conchoidal fracture that produces glass-sharp edges — a property exploited for millions of years by toolmakers.',
+        facts: [
+          'Flint tools — hand axes, scrapers, and arrowheads — were the primary technology of human prehistory for over 2.5 million years, spanning most of the Stone Age.',
+          'Striking flint against iron pyrite or steel produces sparks hot enough to ignite tinder, making it the most reliable fire-starting material available until modern times.',
+          'The "flintlock" firearm, dominant in warfare for over two centuries, uses a flint striker to ignite the powder charge — a direct application of flint\'s spark-producing property.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.62, y:  0.62, z:  0.62, color: '#dddddd', element: 'O'  },
+          { x:  0.62, y: -0.62, z: -0.62, color: '#dddddd', element: 'O'  },
+          { x: -0.62, y:  0.62, z: -0.62, color: '#dddddd', element: 'O'  },
+          { x: -0.62, y: -0.62, z:  0.62, color: '#dddddd', element: 'O'  },
+          { x:  1.24, y:  1.24, z:  1.24, color: '#7799cc', element: 'Si' },
+          { x:  1.86, y:  0.62, z:  0.62, color: '#dddddd', element: 'O'  },
+          { x:  0.62, y:  1.86, z:  0.62, color: '#dddddd', element: 'O'  },
+        ],
+        bonds: [[0,1],[0,2],[0,3],[0,4],[5,1],[5,6],[5,7]]
+      },
+
+      travertine: {
+        name: 'Travertine',
+        formula: 'CaCO₃',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/9/9d/Pamukkale_Travertine.jpg',
+        structureInfo: 'Travertine is a form of limestone deposited by mineral springs, particularly hot springs rich in dissolved calcium bicarbonate. As CO₂ degasses from the water, calcium carbonate precipitates rapidly, building up the characteristic banded or terraced formations.',
+        facts: [
+          'The Colosseum in Rome was largely built from travertine, using an estimated 100,000 cubic metres quarried from Tivoli — making it one of history\'s largest uses of a single stone.',
+          'The white terraces of Pamukkale in Turkey are a UNESCO World Heritage Site, formed entirely by calcium-rich hot springs depositing travertine over thousands of years.',
+          'Travertine accumulates astonishingly fast on a geological scale — centimetres of growth per decade have been measured at active spring sites.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#44cccc', element: 'Ca' },
+          { x:  1.30, y:  0.00, z:  0.00, color: '#888888', element: 'C'  },
+          { x:  2.00, y:  0.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.65, y:  1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.65, y: -1.13, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  0.00, z:  2.20, color: '#44cccc', element: 'Ca' },
+          { x:  1.30, y:  0.00, z:  2.20, color: '#888888', element: 'C'  },
+          { x:  2.00, y:  0.00, z:  2.20, color: '#ff5555', element: 'O'  },
+        ],
+        bonds: [[0,1],[1,2],[1,3],[1,4],[5,6],[6,7],[0,5]]
+      },
+
+      tuff: {
+        name: 'Tuff',
+        formula: 'SiO₂ + Al₂O₃ (volcanic ash)',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Tuff_IMG_3638.jpg',
+        structureInfo: 'Tuff is a volcanic rock formed from compacted ash and pyroclastic fragments ejected during explosive eruptions. Texture ranges from fine-grained vitric tuff to coarse lapilli tuff, and its chemical composition mirrors the source magma — ranging from basaltic to rhyolitic.',
+        facts: [
+          'The famous moai statues of Easter Island were carved from a yellowish-brown volcanic tuff, chosen because it is soft enough to shape with stone tools yet hard enough to survive millennia.',
+          'Roman builders mixed volcanic tuff (pozzolana) with lime to create concrete so durable that the Pantheon, built nearly 2,000 years ago, still stands without reinforcement.',
+          'Tuff forms some of the most fertile soils on Earth — the Campania region of Italy, home to the original San Marzano tomatoes, is built on volcanic tuff deposits from Vesuvius.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.69, y:  0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  0.69, y: -0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y:  0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y: -0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  1.80, y:  0.00, z:  0.00, color: '#aaaaaa', element: 'Al' },
+          { x:  2.50, y:  0.70, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  2.50, y: -0.70, z:  0.00, color: '#ff5555', element: 'O'  },
+        ],
+        bonds: [[0,1],[0,2],[0,3],[0,4],[5,6],[5,7],[0,5]]
+      },
+
+      peridotite: {
+        name: 'Peridotite',
+        formula: '(Mg,Fe)₂SiO₄ + MgSiO₃',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/Peridotite.jpg',
+        structureInfo: 'Peridotite is a dense, coarse-grained ultramafic igneous rock composed primarily of olivine with varying amounts of pyroxene. It is the dominant rock of Earth\'s upper mantle and reaches the surface through tectonic uplift or as xenoliths carried inside volcanic kimberlite pipes.',
+        facts: [
+          'Peridotite makes up roughly 60% of Earth\'s upper mantle, making it the most abundant rock type on the planet by volume — though rarely seen at the surface.',
+          'Diamonds form within peridotite in the mantle at depths exceeding 150 km and are carried to the surface inside kimberlite — itself a variety of peridotite.',
+          'Peridotite reacts with CO₂ and water to form serpentinite, a process that permanently sequesters large amounts of carbon dioxide and has been proposed as a natural carbon-capture method.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.69, y:  0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  0.69, y: -0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y:  0.69, z: -0.69, color: '#ff5555', element: 'O'  },
+          { x: -0.69, y: -0.69, z:  0.69, color: '#ff5555', element: 'O'  },
+          { x:  1.80, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x: -1.80, y:  0.00, z:  0.00, color: '#ffaa00', element: 'Fe' },
+          { x:  0.00, y:  1.80, z:  0.00, color: '#55aa55', element: 'Mg' },
+        ],
+        bonds: [[0,1],[0,2],[0,3],[0,4],[5,1],[5,2],[6,3],[6,4],[7,1],[7,3]]
+      },
+
+      serpentinite: {
+        name: 'Serpentinite',
+        formula: 'Mg₃Si₂O₅(OH)₄',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Serpentinite.jpg',
+        structureInfo: 'Serpentinite is a metamorphic rock formed by the hydrothermal alteration (serpentinization) of ultramafic rocks such as peridotite. It consists mainly of serpentine-group minerals — antigorite, lizardite, and chrysotile — arranged in sheet silicate layers that give the rock its characteristic waxy, greasy lustre.',
+        facts: [
+          'Serpentinite is the state rock of California and forms the distinctive greenish outcrops of the Coast Ranges, producing nickel- and chromium-rich soils that support unique plant communities found nowhere else.',
+          'Asbestos — the fibrous serpentine variety chrysotile — was once widely used as fireproofing and insulation before its carcinogenic properties were established.',
+          'Serpentinization generates hydrogen gas as a byproduct, supporting chemosynthetic bacteria that feed on hydrogen — the same process may have fuelled some of the earliest life on Earth.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x:  1.00, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x: -1.00, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x:  0.50, y:  1.50, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x: -0.50, y:  1.50, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.00, y:  1.00, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  2.50, z:  0.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  0.00, z:  1.20, color: '#ccccff', element: 'H'  },
+        ],
+        bonds: [[0,5],[1,5],[2,5],[3,5],[4,5],[3,6],[4,6],[0,7],[1,7]]
+      },
+
+      mudstone: {
+        name: 'Mudstone',
+        formula: 'Al₂Si₂O₅(OH)₄',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/b/be/Mudstone.jpg',
+        structureInfo: 'Mudstone is a fine-grained clastic sedimentary rock composed of clay and silt particles. Unlike shale, it is not fissile and does not split into thin sheets. It forms from the slow deposition of very fine sediments in quiet, low-energy environments such as deep-ocean floors, lakes, and floodplains.',
+        facts: [
+          'Mudstone is the most common sedimentary rock on Earth, making up roughly 65% of all sedimentary rock in the geological record.',
+          'Many of the best-preserved dinosaur and marine reptile fossils are found in mudstone — the quiet depositional environment captures organisms before scavengers can reach them.',
+          'Mudstone is a significant petroleum source rock: organic matter accumulates and is preserved in its fine-grained, oxygen-poor deposits, then matures into oil and gas under burial heat.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#aaaaaa', element: 'Al' },
+          { x:  0.00, y:  1.80, z:  0.00, color: '#aaaaaa', element: 'Al' },
+          { x:  0.80, y:  0.90, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x: -0.80, y:  0.90, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.00, y:  0.00, z:  1.20, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  1.80, z:  1.20, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  0.00, z: -1.20, color: '#ccccff', element: 'H'  },
+          { x:  0.00, y:  1.80, z: -1.20, color: '#ccccff', element: 'H'  },
+        ],
+        bonds: [[0,2],[0,3],[1,2],[1,3],[0,4],[1,5],[0,6],[1,7]]
+      },
+
+      chert: {
+        name: 'Chert',
+        formula: 'SiO₂',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/8/8e/Chert.jpg',
+        structureInfo: 'Chert is a hard, fine-grained sedimentary rock composed of microcrystalline or cryptocrystalline silica. It forms from the accumulation of siliceous skeletal material (radiolarians, diatoms) on the ocean floor or by replacement of carbonate sediment by silica-rich fluids. Flint is a dark variety of chert found in chalk.',
+        facts: [
+          'Chert, together with its dark flint variety, was the primary raw material for stone tools throughout human prehistory — from the earliest Oldowan hand axes to finely pressure-flaked Neolithic arrowheads.',
+          'Banded Iron Formations composed of alternating chert and iron oxide layers are among the oldest rocks on Earth at up to 3.7 billion years old, and represent the world\'s primary iron ore deposits.',
+          'The Devonian Rhynie chert of Scotland, 407 million years old, preserves extraordinarily detailed fossils of early land plants, fungi, and animals silicified in an ancient peat bog.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.62, y:  0.62, z:  0.62, color: '#cccccc', element: 'O'  },
+          { x:  0.62, y: -0.62, z: -0.62, color: '#cccccc', element: 'O'  },
+          { x: -0.62, y:  0.62, z: -0.62, color: '#cccccc', element: 'O'  },
+          { x: -0.62, y: -0.62, z:  0.62, color: '#cccccc', element: 'O'  },
+          { x:  1.24, y:  0.00, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.00, y:  1.24, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.00, y:  0.00, z:  1.24, color: '#7799cc', element: 'Si' },
+        ],
+        bonds: [[0,1],[0,2],[0,3],[0,4],[5,1],[5,2],[6,3],[6,4],[7,1],[7,3]]
+      },
+
+      eclogite: {
+        name: 'Eclogite',
+        formula: 'CaMgSi₂O₆ + (Fe,Mg)₃Al₂Si₃O₁₂',
+        image: 'https://upload.wikimedia.org/wikipedia/commons/7/7d/Eclogite.jpg',
+        structureInfo: 'Eclogite is a high-pressure, high-temperature metamorphic rock composed of green omphacite pyroxene and red-to-orange pyrope garnet. It forms when oceanic crust is subducted to depths exceeding 50 km, where extreme pressure transforms the original basalt into a dense, stable high-pressure assemblage.',
+        facts: [
+          'Eclogite is the densest of common crustal rocks — its density exceeds that of the surrounding mantle, which is why subducting oceanic plates sink and continue to descend rather than floating.',
+          'Diamonds found inside some eclogite xenoliths record formation depths of 150–250 km in the mantle, giving geologists direct physical samples from deep inside the Earth.',
+          'The spectacular red garnet and bright green pyroxene of eclogite make it one of the most visually striking rocks in geology and a prized collector\'s specimen.',
+        ],
+        atoms: [
+          { x:  0.00, y:  0.00, z:  0.00, color: '#44cccc', element: 'Ca' },
+          { x:  1.00, y:  0.00, z:  0.00, color: '#55aa55', element: 'Mg' },
+          { x:  0.50, y:  0.87, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x: -0.50, y:  0.87, z:  0.00, color: '#7799cc', element: 'Si' },
+          { x:  0.00, y:  0.50, z:  1.00, color: '#ff5555', element: 'O'  },
+          { x:  0.00, y:  0.50, z: -1.00, color: '#ff5555', element: 'O'  },
+          { x:  2.00, y:  0.00, z:  0.00, color: '#ff6666', element: 'Fe' },
+          { x:  1.50, y:  1.50, z:  0.00, color: '#aaaaaa', element: 'Al' },
+        ],
+        bonds: [[0,2],[0,3],[1,2],[1,3],[2,4],[3,5],[6,4],[6,5],[7,4],[7,5]]
       }
 
     };
