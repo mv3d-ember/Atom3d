@@ -233,6 +233,43 @@ canvas{display:block}
 #orb-sw[aria-checked="true"]:before{transform:translateX(16px)}
 #orb-label{font-size:.76rem;color:rgba(255,255,255,.62);white-space:nowrap;user-select:none;transition:color .2s}
 #orb-toggle-wrap.active #orb-label{color:rgba(140,170,255,.9)}
+/* ── Feedback link ── */
+#feedback-link{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);pointer-events:auto;white-space:nowrap;z-index:10}
+#feedback-link a{font-size:.66rem;color:rgba(255,255,255,.22);text-decoration:none;letter-spacing:.05em;transition:color .2s}
+#feedback-link a:hover{color:rgba(255,255,255,.48);text-decoration:underline}
+/* ── Feedback modal ── */
+.fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center}
+.fb-modal{background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:28px 32px;width:min(420px,92vw);position:relative;box-shadow:0 16px 48px rgba(0,0,0,.85)}
+.fb-modal h3{margin:0 0 20px;font-size:1rem;font-weight:600;color:#eee;letter-spacing:.02em}
+.fb-close{position:absolute;top:10px;right:12px;background:none;border:none;color:#555;font-size:1.4rem;cursor:pointer;line-height:1;padding:2px 7px;border-radius:4px;transition:color .15s,background .15s}
+.fb-close:hover{color:#ccc;background:rgba(255,255,255,.08)}
+.fb-field{display:block;margin-bottom:15px}
+.fb-field-label{font-size:.74rem;color:#666;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;display:block}
+.fb-field-label .req{color:#cc5555}
+.fb-field-label .opt{color:#444;font-size:.7rem;text-transform:none;letter-spacing:0}
+.fb-modal select,.fb-modal input[type="email"],.fb-modal textarea{display:block;width:100%;background:#1a1a1a;border:1px solid #2e2e2e;border-radius:6px;padding:9px 12px;color:#ddd;font-size:.9rem;outline:none;font-family:inherit;box-sizing:border-box;transition:border-color .15s}
+.fb-modal textarea{resize:vertical;min-height:110px}
+.fb-modal select:focus,.fb-modal input:focus,.fb-modal textarea:focus{border-color:#4455aa}
+.fb-submit{width:100%;margin-top:4px;padding:10px;background:#1e2e5a;border:1px solid #2e4080;border-radius:7px;color:#99b8ff;font-size:.9rem;cursor:pointer;transition:background .2s;font-family:inherit}
+.fb-submit:hover{background:#2a3e7a}
+/* light theme */
+[data-theme="light"] .fb-modal{background:#f2f4fc;border-color:rgba(0,0,0,.12)}
+[data-theme="light"] .fb-modal h3{color:#1a1a30}
+[data-theme="light"] .fb-field-label{color:#888}
+[data-theme="light"] .fb-modal select,[data-theme="light"] .fb-modal input,[data-theme="light"] .fb-modal textarea{background:#fff;border-color:rgba(0,0,0,.18);color:#1a1a30}
+[data-theme="light"] #feedback-link a{color:rgba(0,0,0,.22)}
+[data-theme="light"] #feedback-link a:hover{color:rgba(0,0,0,.5)}
+/* purple theme */
+[data-theme="purple"] .fb-modal{background:#0e0022;border-color:rgba(150,70,255,.25)}
+[data-theme="purple"] .fb-modal h3{color:#e2d4ff}
+[data-theme="purple"] .fb-field-label{color:rgba(190,140,255,.55)}
+[data-theme="purple"] .fb-modal select,[data-theme="purple"] .fb-modal input,[data-theme="purple"] .fb-modal textarea{background:rgba(150,70,255,.08);border-color:rgba(150,70,255,.28);color:#e2d4ff}
+[data-theme="purple"] .fb-modal select:focus,[data-theme="purple"] .fb-modal input:focus,[data-theme="purple"] .fb-modal textarea:focus{border-color:#9955dd}
+[data-theme="purple"] .fb-submit{background:rgba(100,30,180,.4);border-color:rgba(150,70,255,.4);color:#cc99ff}
+[data-theme="purple"] .fb-submit:hover{background:rgba(100,30,180,.65)}
+[data-theme="purple"] #feedback-link a{color:rgba(190,140,255,.25)}
+[data-theme="purple"] #feedback-link a:hover{color:rgba(190,140,255,.55)}
+@media(max-width:640px){#feedback-link{bottom:52px}}
 </style>
 </head>
 <body>
@@ -365,6 +402,7 @@ canvas{display:block}
   <div id="err">Element not found. Try "Carbon", "Fe", or "26".</div>
   <div id="bond-err"></div>
   <div id="hint">Enter an element above to begin</div>
+  <div id="feedback-link"><a href="#" id="open-feedback">suggestions · complaints · bug reports</a></div>
 </div>
 
 <!-- Combos Popup -->
@@ -2079,6 +2117,81 @@ fetch('https://api.ipify.org?format=json')
         .catch(function(){});
     })
     .catch(function(){});
+})();
+</script>
+<!-- Feedback Modal -->
+<div id="fb-overlay" class="fb-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+  <div class="fb-modal">
+    <button class="fb-close" id="fb-close" aria-label="Close">&times;</button>
+    <h3 id="fb-title">Send Feedback</h3>
+    <form id="fb-form" novalidate>
+      <label class="fb-field">
+        <span class="fb-field-label">Type <span class="req">*</span></span>
+        <select id="fb-type" required>
+          <option value="">Select…</option>
+          <option value="Suggestion">Suggestion</option>
+          <option value="Complaint">Complaint</option>
+          <option value="Bug Report">Bug Report</option>
+        </select>
+      </label>
+      <label class="fb-field">
+        <span class="fb-field-label">Your Email <span class="opt">(optional)</span></span>
+        <input type="email" id="fb-email" placeholder="you@example.com" autocomplete="email">
+      </label>
+      <label class="fb-field">
+        <span class="fb-field-label">Message <span class="req">*</span></span>
+        <textarea id="fb-body" placeholder="Describe your suggestion, complaint, or bug…" required></textarea>
+      </label>
+      <button type="submit" class="fb-submit">Send via Email</button>
+    </form>
+  </div>
+</div>
+<script>
+(function () {
+  var overlay = document.getElementById('fb-overlay');
+  var form    = document.getElementById('fb-form');
+
+  document.getElementById('open-feedback').addEventListener('click', function (e) {
+    e.preventDefault();
+    overlay.style.display = 'flex';
+    document.getElementById('fb-type').focus();
+  });
+
+  function closeModal() {
+    overlay.style.display = 'none';
+  }
+
+  document.getElementById('fb-close').addEventListener('click', closeModal);
+
+  overlay.addEventListener('click', function (e) {
+    if (e.target === overlay) closeModal();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && overlay.style.display !== 'none') closeModal();
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var type  = document.getElementById('fb-type').value.trim();
+    var email = document.getElementById('fb-email').value.trim();
+    var body  = document.getElementById('fb-body').value.trim();
+
+    if (!type) { alert('Please select a type.'); return; }
+    if (!body) { alert('Please enter a message.'); return; }
+
+    var emailLine = email ? 'From: ' + email : 'Email: Not provided';
+    var fullBody  = 'Type: ' + type + '\n' + emailLine + '\n\nMessage:\n' + body;
+    var subject   = '[' + type + '] Feedback from atom3d.org';
+
+    window.location.href =
+      'mailto:atom3d.business@gmail.com'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body='    + encodeURIComponent(fullBody);
+
+    closeModal();
+    form.reset();
+  });
 })();
 </script>
 </body>
