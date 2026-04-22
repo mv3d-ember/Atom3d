@@ -2180,17 +2180,46 @@ fetch('https://api.ipify.org?format=json')
     if (!type) { alert('Please select a type.'); return; }
     if (!body) { alert('Please enter a message.'); return; }
 
-    var emailLine = email ? 'From: ' + email : 'Email: Not provided';
-    var fullBody  = 'Type: ' + type + '\n' + emailLine + '\n\nMessage:\n' + body;
-    var subject   = '[' + type + '] Feedback from atom3d.org';
+    var btn = form.querySelector('.fb-submit');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
 
-    window.location.href =
-      'mailto:atom3d.business@gmail.com'
-      + '?subject=' + encodeURIComponent(subject)
-      + '&body='    + encodeURIComponent(fullBody);
+    var payload = {
+      access_key: '19238b1c-3865-4179-9d36-75e51ffb8bef',
+      subject:    '[' + type + '] Feedback from atom3d.org',
+      from_name:  'Atom3D Feedback',
+      message:    'Type: ' + type + '\nEmail: ' + (email || 'Not provided') + '\n\nMessage:\n' + body
+    };
+    if (email) payload.replyto = email;
 
-    closeModal();
-    form.reset();
+    fetch('https://api.web3forms.com/submit', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body:    JSON.stringify(payload)
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data.success) {
+        btn.textContent = 'Sent ✓';
+        btn.style.cssText = 'width:100%;margin-top:4px;padding:10px;background:#1a4a2a;border:1px solid #2a6a3a;border-radius:7px;color:#88ddaa;font-size:.9rem;cursor:default';
+        setTimeout(function () {
+          closeModal();
+          form.reset();
+          btn.disabled = false;
+          btn.textContent = 'Send via Email';
+          btn.style.cssText = '';
+        }, 1400);
+      } else {
+        alert('Something went wrong. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Send via Email';
+      }
+    })
+    .catch(function () {
+      alert('Network error. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Send via Email';
+    });
   });
 })();
 </script>
