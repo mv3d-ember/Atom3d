@@ -234,9 +234,8 @@ canvas{display:block}
 #orb-label{font-size:.76rem;color:rgba(255,255,255,.62);white-space:nowrap;user-select:none;transition:color .2s}
 #orb-toggle-wrap.active #orb-label{color:rgba(140,170,255,.9)}
 /* ── Feedback link ── */
-#feedback-link{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);pointer-events:auto;white-space:nowrap;z-index:10}
-#feedback-link a{font-size:.66rem;color:rgba(255,255,255,.22);text-decoration:none;letter-spacing:.05em;transition:color .2s}
-#feedback-link a:hover{color:rgba(255,255,255,.48);text-decoration:underline}
+.hint-link{pointer-events:auto;color:rgba(255,255,255,.38);text-decoration:none;transition:color .2s}
+.hint-link:hover{color:rgba(255,255,255,.7);text-decoration:underline}
 /* ── Feedback modal ── */
 .fb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center}
 .fb-modal{background:#111;border:1px solid #2a2a2a;border-radius:12px;padding:28px 32px;width:min(420px,92vw);position:relative;box-shadow:0 16px 48px rgba(0,0,0,.85)}
@@ -257,8 +256,8 @@ canvas{display:block}
 [data-theme="light"] .fb-modal h3{color:#1a1a30}
 [data-theme="light"] .fb-field-label{color:#888}
 [data-theme="light"] .fb-modal select,[data-theme="light"] .fb-modal input,[data-theme="light"] .fb-modal textarea{background:#fff;border-color:rgba(0,0,0,.18);color:#1a1a30}
-[data-theme="light"] #feedback-link a{color:rgba(0,0,0,.22)}
-[data-theme="light"] #feedback-link a:hover{color:rgba(0,0,0,.5)}
+[data-theme="light"] .hint-link{color:rgba(0,0,0,.32)}
+[data-theme="light"] .hint-link:hover{color:rgba(0,0,0,.6)}
 /* purple theme */
 [data-theme="purple"] .fb-modal{background:#0e0022;border-color:rgba(150,70,255,.25)}
 [data-theme="purple"] .fb-modal h3{color:#e2d4ff}
@@ -267,9 +266,8 @@ canvas{display:block}
 [data-theme="purple"] .fb-modal select:focus,[data-theme="purple"] .fb-modal input:focus,[data-theme="purple"] .fb-modal textarea:focus{border-color:#9955dd}
 [data-theme="purple"] .fb-submit{background:rgba(100,30,180,.4);border-color:rgba(150,70,255,.4);color:#cc99ff}
 [data-theme="purple"] .fb-submit:hover{background:rgba(100,30,180,.65)}
-[data-theme="purple"] #feedback-link a{color:rgba(190,140,255,.25)}
-[data-theme="purple"] #feedback-link a:hover{color:rgba(190,140,255,.55)}
-@media(max-width:640px){#feedback-link{bottom:52px}}
+[data-theme="purple"] .hint-link{color:rgba(190,140,255,.38)}
+[data-theme="purple"] .hint-link:hover{color:rgba(190,140,255,.7)}
 </style>
 </head>
 <body>
@@ -401,8 +399,7 @@ canvas{display:block}
   </div>
   <div id="err">Element not found. Try "Carbon", "Fe", or "26".</div>
   <div id="bond-err"></div>
-  <div id="hint">Enter an element above to begin</div>
-  <div id="feedback-link"><a href="#" id="open-feedback">suggestions · complaints · bug reports</a></div>
+  <div id="hint"><span id="hint-text">Enter an element above to begin</span>  •  <a href="#" id="open-feedback" class="hint-link">suggestions · complaints · bug reports</a></div>
 </div>
 
 <!-- Combos Popup -->
@@ -1014,7 +1011,7 @@ const inp=document.getElementById('inp');
 const btnDl=document.getElementById('btn-dl');
 const errDiv=document.getElementById('err');
 const infoDiv=document.getElementById('info');
-const hint=document.getElementById('hint');
+const hint=document.getElementById('hint-text');
 
 function generate(){
   const q=inp.value.trim();
@@ -1320,7 +1317,7 @@ function combineBond(){
   }
   buildMolecule(compound);
   updateBondInfo(compound);
-  document.getElementById('hint').textContent='Drag to rotate  •  Scroll to zoom';
+  document.getElementById('hint-text').textContent='Drag to rotate  •  Scroll to zoom';
 }
 ['el1','n1','el2','n2','el3','n3'].forEach(id=>{
   document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')combineBond();});
@@ -1426,7 +1423,7 @@ document.getElementById('btn-toggle').addEventListener('click',()=>{
   bondErr.style.display='none';
   document.getElementById('app-title').textContent=isAtom?'Atom3D':'Bond Builder';
   document.getElementById('btn-toggle').textContent=isAtom?'🔗 Bond Builder':'⚛ Atom Viewer';
-  document.getElementById('hint').textContent=isAtom?'Enter an element above to begin':'Enter 2–3 elements to see how they bond';
+  document.getElementById('hint-text').textContent=isAtom?'Enter an element above to begin':'Enter 2–3 elements to see how they bond';
   document.getElementById('orb-toggle-wrap').style.display=isAtom?'flex':'none';
   if(atomGroup){scene.remove(atomGroup);atomGroup=null;electronOrbits=[];}
   if(molGroup){scene.remove(molGroup);molGroup=null;}
