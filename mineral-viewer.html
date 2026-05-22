@@ -196,6 +196,20 @@
       outline: none;
       cursor: pointer;
     }
+    #mineral-dropdown {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      cursor: pointer;
+      max-width: 200px;
+        }
+        #mineral-dropdown option {
+          background: #1a1a1a;
+        }
   </style>
 </head>
 <body>
@@ -210,6 +224,9 @@
         autocomplete="off"
         spellcheck="false"
       />
+      <select id="mineral-dropdown">
+        <option value="">-- All Minerals --</option>
+      </select>
       <a href="index.html"><button id="mintoindbut">Element viewer</button></a>
     </div>
   </header>
@@ -2268,6 +2285,21 @@
           structureGroup.remove(c);
         }
       }
+      const dropdown = document.getElementById('mineral-dropdown');
+      Object.keys(MINERALS).sort().forEach(key=>{
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = MINERALS[key].name;
+        dropdown.appendChild(option);
+      });
+      dropdown.addEventListener('change', function () {
+        const key = this.value;
+        if (key) {
+          renderStructure(key);
+          updatePanel(key);
+          document.getElementById('mineral-search').value = '';
+        }
+      })
 
       document.getElementById('mineral-search').addEventListener('keydown', function (e) {
         if (e.key !== 'Enter') return;
